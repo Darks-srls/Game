@@ -123,6 +123,7 @@ export interface World {
   fx: THREE.Group;
   clouds: THREE.Group;
   pickables: THREE.Object3D[]; // per la mira dei cecchini
+  camBlockers: THREE.Object3D[]; // muri e decorazioni grandi: la telecamera non ci passa dietro (minigiochi a moduli)
   update: (t: number, dt: number, info: ArenaInfo) => void;
   render: (dt: number) => void;
   setSize: (w: number, h: number) => void;
@@ -263,6 +264,7 @@ export function createWorld(canvas: HTMLCanvasElement, lowPower: boolean): World
     fx,
     clouds,
     pickables: [],
+    camBlockers: [],
     update: () => {},
     setSize: (w, h) => {
       w0 = w;
@@ -464,6 +466,7 @@ export function buildArena(world: World, kind: MiniKind) {
   const g = world.arena;
   clearGroup(g);
   world.pickables = [];
+  world.camBlockers = [];
   const ext = CLIENT_MINIS[kind as keyof typeof CLIENT_MINIS];
   if (ext) {
     // minigioco a moduli: costruisce tutto lui

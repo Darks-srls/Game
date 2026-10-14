@@ -76,6 +76,9 @@ Non usare il browser, non avviare server, non fare commit: la prova visiva la fa
   oggetti giganti), qualcosa che si muove anche sullo sfondo. Pezzi pronti in `../scene`: `toy`, `matte`, `glow`,
   `rbox`, `outlined`, `shadowy`, `canvasTex`, `balloon`, `flagLine`, `finishArch`, `burst`, `dust`, `poof`,
   `popText`, `ringPulse`, `splat`, `makeTomato`.
+- Telecamera: sta ~9,5 m dietro e ~4 m sopra il personaggio. Muri, stanze e decorazioni alte vicino a dove si gioca
+  vanno aggiunti a `world.camBlockers` (in build): la telecamera si avvicina invece di finirci dietro. Le decorazioni
+  grandi tienile lontane dal bordo (oltre ~12 m) o basse. Niente luci/emissivi fortissimi al centro (il bagliore copre tutto).
 - Icona del minigioco: `icon(size)` con `Badge` + disegno SVG semplice (vedi re.tsx e `MiniIcon` in icons.tsx).
 - **Niente adesivi grandi al centro dello schermo** (il giocatore li odia): non usare `c.sticker`. Per i momenti
   importanti: `popText` nel mondo 3D, una riga in cronaca (`c.feed`), suono, scossone leggero.

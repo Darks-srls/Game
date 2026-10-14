@@ -209,6 +209,11 @@ const orbitOf = (kind: MiniKind) => ORBIT[kind as BaseKind] ?? cmOf(kind)?.orbit
 const highCam = (kind: MiniKind) => HIGH_CAM.includes(kind) || !!cmOf(kind)?.highCam;
 const faceSpawn = (kind: MiniKind) => FACE_SPAWN.includes(kind) || !!cmOf(kind)?.faceSpawn;
 
+// telecamera che non passa dietro ai muri (minigiochi a moduli: world.camBlockers)
+const camRay = new THREE.Raycaster();
+const camFrom = new THREE.Vector3();
+const camDir = new THREE.Vector3();
+
 type Others = Map<string, { x: number; y: number; z: number; r: number; a: number; tx: number; ty: number; tz: number; tr: number; speed: number; vx?: number; vz?: number; lt?: number }>;
 
 export default function PartyView({ state, clockOffset, canLead, onAction, onNewGame, onBackToLobby, onLeave, realtime }: ModeProps) {
@@ -1150,6 +1155,17 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
           follow.lerp(target, 1 - Math.exp(-dt * 22));
           wantPos.set(follow.x - Math.sin(c.yaw) * Math.cos(c.pitch) * dist, follow.y + 1.2 + Math.sin(c.pitch) * dist, follow.z - Math.cos(c.yaw) * Math.cos(c.pitch) * dist);
           wantLook.set(follow.x + Math.sin(c.yaw) * 3, follow.y + 1.6, follow.z + Math.cos(c.yaw) * 3);
+          if (world.camBlockers.length) {
+            // c'è un muro tra me e la telecamera? la telecamera si avvicina (mai sotto 1,5 m)
+            camFrom.set(follow.x, follow.y + 1.6, follow.z);
+            camDir.subVectors(wantPos, camFrom);
+            const len = camDir.length();
+            camDir.divideScalar(len || 1);
+            camRay.set(camFrom, camDir);
+            camRay.far = len;
+            const hit = camRay.intersectObjects(world.camBlockers, true)[0];
+            if (hit) wantPos.copy(camFrom).addScaledVector(camDir, Math.max(1.5, hit.distance - 0.5));
+          }
           camPos.copy(wantPos);
           camLook.copy(wantLook);
         }

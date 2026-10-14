@@ -81,6 +81,7 @@ export interface ClientMini {
   faceSpawn?: boolean; // la telecamera parte girata come il personaggio
   icon: (size: number) => ReactNode; // stemma rotondo del minigioco (stile MiniIcon: Badge + disegno SVG)
   build: (world: World) => (f: MiniFrame) => void; // costruisce l'arena in world.arena e ritorna l'animazione di ogni fotogramma
+  // (muri e decorazioni grandi che possono finire tra il personaggio e la telecamera: mettili in world.camBlockers)
   local?: (f: MiniFrame, world: World) => void;
   speed?: (f: MiniFrame) => number; // moltiplicatore della MIA velocità (es. 0.8 mentre porto un uovo); i bot lo fanno con ServerMini.speed // logica sul mio telefono a ogni fotogramma (dopo la mia fisica)
   decorate?: (av: Avatar, id: string, f: MiniFrame) => void; // cappelli, code, macchinine… (av.deco / av.headDeco si svuotano da soli a fine minigioco)

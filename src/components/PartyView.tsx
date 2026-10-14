@@ -1138,6 +1138,17 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
           const p = s.stage === 'INTRO' ? 0.5 : Math.max(0.35, c.pitch);
           wantPos.set(o.c[0] - Math.sin(yaw) * Math.cos(p) * o.r, o.c[1] + Math.sin(p) * o.r, o.c[2] - Math.cos(yaw) * Math.cos(p) * o.r);
           wantLook.set(o.c[0], o.c[1], o.c[2]);
+          if (world.camBlockers.length) {
+            // anche dall'alto la telecamera non resta dietro a muri e decorazioni grandi
+            camFrom.set(o.c[0], o.c[1] + 1, o.c[2]);
+            camDir.subVectors(wantPos, camFrom);
+            const len = camDir.length();
+            camDir.divideScalar(len || 1);
+            camRay.set(camFrom, camDir);
+            camRay.far = len;
+            const hit = camRay.intersectObjects(world.camBlockers, true)[0];
+            if (hit) wantPos.copy(camFrom).addScaledVector(camDir, Math.max(4, hit.distance - 0.8));
+          }
         } else if (s.kind === 'DENTE') {
           // pasta al dente: alle mie spalle, guardando il pentolone e il timer (si può girare un po')
           // inquadratura fissa e centrata davanti al pentolone: si vedono sempre pentola e timer interi

@@ -1,0 +1,1185 @@
+@import "tailwindcss";
+
+/* ================= Tema "gioco mobile" (stile Trivia Crack) =================
+   I componenti usano le palette Tailwind slate / amber / red / emerald / cyan:
+   qui le ridefiniamo, così tutta l'app diventa colorata senza toccare i componenti. */
+@theme {
+  --font-sans: "Baloo 2", ui-rounded, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Baloo 2", ui-rounded, "Segoe UI", system-ui, sans-serif;
+  --font-display: "Lilita One", "Baloo 2", system-ui, sans-serif;
+
+  /* slate -> viola "uva": sfondi, pannelli, testi */
+  --color-slate-50: #f8f5ff;
+  --color-slate-100: #f1ebff;
+  --color-slate-200: #e3d9ff;
+  --color-slate-300: #cfc1ff;
+  --color-slate-400: #b8a6fd;
+  --color-slate-500: #9f88f3;
+  --color-slate-600: #8166e0;
+  --color-slate-700: #6949c8;
+  --color-slate-800: #5433b2;
+  --color-slate-900: #412499;
+  --color-slate-950: #2c1577;
+
+  /* amber -> giallo oro: azione principale */
+  --color-amber-50: #fffbe6;
+  --color-amber-100: #fff3bf;
+  --color-amber-200: #ffe88a;
+  --color-amber-300: #ffdc57;
+  --color-amber-400: #ffd02e;
+  --color-amber-500: #ffc20d;
+  --color-amber-600: #f0a500;
+  --color-amber-700: #cc8400;
+  --color-amber-800: #a06500;
+  --color-amber-900: #7a4b00;
+  --color-amber-950: #4d2e00;
+
+  /* red -> rosa fragola: pericolo */
+  --color-red-50: #fff0f4;
+  --color-red-100: #ffdbe5;
+  --color-red-200: #ffb3c8;
+  --color-red-300: #ff8aa8;
+  --color-red-400: #ff5f88;
+  --color-red-500: #ff3b6e;
+  --color-red-600: #eb1f57;
+  --color-red-700: #c51246;
+  --color-red-800: #9c0d3a;
+  --color-red-900: #740a2e;
+  --color-red-950: #4a061d;
+
+  /* emerald -> verde lime: pronto, conferma */
+  --color-emerald-50: #f1fde9;
+  --color-emerald-100: #dcf9c8;
+  --color-emerald-200: #bff29a;
+  --color-emerald-300: #9de86b;
+  --color-emerald-400: #7ddc45;
+  --color-emerald-500: #5dc928;
+  --color-emerald-600: #46a918;
+  --color-emerald-700: #368413;
+  --color-emerald-800: #2a6512;
+  --color-emerald-900: #1f4a0f;
+  --color-emerald-950: #112b07;
+
+  /* cyan -> azzurro cielo */
+  --color-cyan-50: #ecfbff;
+  --color-cyan-100: #cff4ff;
+  --color-cyan-200: #a3eaff;
+  --color-cyan-300: #6fdcff;
+  --color-cyan-400: #38cbff;
+  --color-cyan-500: #12b5f5;
+  --color-cyan-600: #0791d6;
+  --color-cyan-700: #0a72ab;
+  --color-cyan-800: #0e5b87;
+  --color-cyan-900: #114c70;
+  --color-cyan-950: #0a2f47;
+
+  --radius-md: 0.6rem;
+  --radius-lg: 0.9rem;
+  --radius-xl: 1.15rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+}
+
+/* ================= Base ================= */
+
+html {
+  background: #2c1577;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  background-color: #2c1577;
+  background-image:
+    radial-gradient(ellipse 90% 45% at 50% 0%, rgba(110, 200, 255, 0.42), transparent 70%),
+    repeating-conic-gradient(from 0deg at 50% 28%, rgba(255, 255, 255, 0.05) 0deg 8deg, transparent 8deg 16deg),
+    linear-gradient(180deg, #5a35e0 0%, #3a1c9a 45%, #2c1577 100%);
+  background-attachment: fixed;
+}
+
+/* Titoli e testi "pesanti": font cartoon */
+h1,
+h2,
+h3,
+.font-black {
+  font-family: var(--font-display);
+  font-weight: 400;
+}
+
+h1,
+h2 {
+  text-shadow: 0 3px 0 rgba(26, 8, 80, 0.55);
+}
+
+.font-mono {
+  font-variant-numeric: tabular-nums;
+}
+
+input,
+textarea {
+  font-weight: 600;
+}
+
+/* Sul telefono: niente menu "copia/salva" né selezione del testo tenendo premuto */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+button {
+  touch-action: manipulation;
+}
+
+/* ================= Pannelli e bottoni ================= */
+
+/* Pannelli: ombra piena e un filo di luce in alto, come le tessere dei giochi mobile */
+:is(.rounded-2xl, .rounded-3xl):is([class^="bg-slate-9"], [class*=" bg-slate-9"], [class^="bg-slate-8"], [class*=" bg-slate-8"]) {
+  box-shadow: 0 6px 0 rgba(22, 6, 72, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.08);
+}
+:is(.rounded-3xl):is([class^="bg-slate-9"], [class*=" bg-slate-9"]) {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.07), transparent 38%);
+}
+
+/* Bottoni: rimbalzo alla pressione */
+button {
+  transition: transform 0.14s cubic-bezier(0.3, 1.6, 0.5, 1), filter 0.15s ease, box-shadow 0.12s ease;
+}
+button:not(:disabled):hover {
+  filter: brightness(1.08);
+}
+button:not(:disabled):active {
+  transform: translateY(3px) scale(0.97);
+}
+
+/* Bottoni colorati: bordo inferiore "3D" */
+button:is(
+    [class^="bg-amber-4"], [class*=" bg-amber-4"], [class^="bg-amber-5"], [class*=" bg-amber-5"],
+    [class^="bg-red-5"], [class*=" bg-red-5"], [class^="bg-red-6"], [class*=" bg-red-6"],
+    [class^="bg-emerald-5"], [class*=" bg-emerald-5"], [class^="bg-emerald-6"], [class*=" bg-emerald-6"],
+    [class^="bg-cyan-5"], [class*=" bg-cyan-5"], [class*=" from-amber"], [class*=" from-red"],
+    [class*=" from-emerald"], [class*=" from-cyan"]
+  ) {
+  box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.2), 0 5px 0 rgba(22, 6, 72, 0.45);
+}
+button:is([class^="bg-slate-7"], [class*=" bg-slate-7"], [class^="bg-slate-8"], [class*=" bg-slate-8"]) {
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.18);
+}
+
+@property --ang {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* Classi dell'app nel layer "components": le utility di Tailwind (es. absolute, overflow) vincono sempre */
+@layer components {
+  /* ================= Sfondo vivo: luci che si muovono e scintille che salgono ================= */
+
+  .fx {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .fx-orb {
+    position: absolute;
+    width: 75vmax;
+    height: 75vmax;
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgba(56, 203, 255, 0.4), transparent 62%);
+    animation: drift 24s ease-in-out infinite alternate;
+  }
+  .fx-orb.o1 {
+    top: -38vmax;
+    left: -30vmax;
+  }
+  .fx-orb.o2 {
+    bottom: -40vmax;
+    right: -32vmax;
+    background: radial-gradient(circle, rgba(255, 95, 210, 0.36), transparent 62%);
+    animation-duration: 30s;
+    animation-delay: -8s;
+  }
+  .fx-orb.o3 {
+    top: 35%;
+    left: 30%;
+    width: 55vmax;
+    height: 55vmax;
+    background: radial-gradient(circle, rgba(255, 208, 46, 0.16), transparent 62%);
+    animation-duration: 36s;
+    animation-delay: -15s;
+  }
+  .fx-spark {
+    position: absolute;
+    bottom: -12px;
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    background: #fff;
+    box-shadow: 0 0 8px 2px rgba(255, 255, 255, 0.7);
+    opacity: 0;
+    animation: sparkRise linear infinite;
+  }
+  @keyframes drift {
+    to {
+      transform: translate(12vmax, 9vmax) scale(1.18);
+    }
+  }
+  @keyframes sparkRise {
+    0% {
+      transform: translate3d(0, 0, 0) scale(0.5);
+      opacity: 0;
+    }
+    12% {
+      opacity: 0.85;
+    }
+    85% {
+      opacity: 0.5;
+    }
+    100% {
+      transform: translate3d(var(--dx, 20px), -105vh, 0) scale(1.15);
+      opacity: 0;
+    }
+  }
+
+
+  /* Riflesso di luce che attraversa i pulsanti importanti */
+  .shine {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .shine::after {
+    content: "";
+    position: absolute;
+    inset: -20% auto -20% -60%;
+    width: 45%;
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+    transform: skewX(-18deg);
+    animation: shineSweep 3.6s ease-in-out infinite;
+    animation-delay: var(--d, 0s);
+    pointer-events: none;
+  }
+  @keyframes shineSweep {
+    0%,
+    55% {
+      left: -60%;
+    }
+    85%,
+    100% {
+      left: 130%;
+    }
+  }
+
+  /* Bordo arcobaleno che gira (gioco scelto, pulsante "Avvia") */
+
+  .rainbow {
+    position: relative;
+    isolation: isolate;
+  }
+  .rainbow::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: conic-gradient(from var(--ang), #ffd02e, #ff5fd2, #38cbff, #7ddc45, #ffd02e);
+    animation: spinAngle 2.6s linear infinite;
+  }
+  @keyframes spinAngle {
+    to {
+      --ang: 360deg;
+    }
+  }
+
+  /* Interruttore (stanza privata, contenuti piccanti) */
+  .switch {
+    position: relative;
+    width: 54px;
+    height: 32px;
+    flex-shrink: 0;
+    border-radius: 9999px;
+    background: #2c1577;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.35);
+    transition: background 0.25s ease;
+  }
+  .switch > span {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 26px;
+    height: 26px;
+    border-radius: 9999px;
+    background: #fff;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+    transition: transform 0.3s cubic-bezier(0.3, 1.6, 0.5, 1);
+  }
+  .switch.on {
+    background: #ff3b6e;
+  }
+  .switch.on.green {
+    background: #5dc928;
+  }
+  .switch.on > span {
+    transform: translateX(22px);
+  }
+
+  /* ================= Animazioni d'ingresso ================= */
+
+  /* I blocchi di ogni schermata entrano uno dopo l'altro */
+  .stagger > * {
+    animation: rise 0.55s cubic-bezier(0.2, 1.25, 0.35, 1) both;
+  }
+  .stagger > :nth-child(2) {
+    animation-delay: 0.05s;
+  }
+  .stagger > :nth-child(3) {
+    animation-delay: 0.1s;
+  }
+  .stagger > :nth-child(4) {
+    animation-delay: 0.15s;
+  }
+  .stagger > :nth-child(5) {
+    animation-delay: 0.2s;
+  }
+  .stagger > :nth-child(6) {
+    animation-delay: 0.25s;
+  }
+  .stagger > :nth-child(7) {
+    animation-delay: 0.3s;
+  }
+  .stagger > :nth-child(n + 8) {
+    animation-delay: 0.35s;
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(22px) scale(0.96);
+    }
+  }
+
+  /* Comparsa con rimbalzo (finestre, giocatori che entrano, avvisi) */
+  .pop {
+    animation: popIn 0.42s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+  }
+  @keyframes popIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.85);
+    }
+  }
+
+  /* Barra in basso che sale */
+  .bar-in {
+    animation: barIn 0.5s cubic-bezier(0.2, 1.3, 0.4, 1) both;
+  }
+  @keyframes barIn {
+    from {
+      opacity: 0;
+      transform: translateY(40px);
+    }
+  }
+
+  /* Finestre dal basso */
+  .sheet-backdrop {
+    animation: fadeIn 0.2s ease both;
+  }
+  .sheet {
+    animation: sheetUp 0.45s cubic-bezier(0.2, 1.25, 0.35, 1) both;
+  }
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes sheetUp {
+    from {
+      opacity: 0;
+      transform: translateY(70px) scale(0.96);
+    }
+  }
+
+  /* ================= Home ================= */
+
+  /* Logo: medaglione che fluttua */
+  .hero-badge {
+    position: relative;
+    width: 84px;
+    height: 84px;
+    border-radius: 9999px;
+    display: grid;
+    place-items: center;
+    background: radial-gradient(circle at 35% 30%, #ffe88a, #ffc20d 55%, #f08a00);
+    box-shadow: 0 0 0 5px #fff, 0 8px 0 5px rgba(22, 6, 72, 0.45), 0 18px 40px rgba(0, 0, 0, 0.35);
+    animation: bob 2.8s ease-in-out infinite;
+  }
+  .hero-badge::before,
+  .hero-badge::after {
+    content: "★";
+    position: absolute;
+    color: #fff;
+    text-shadow: 0 2px 0 rgba(22, 6, 72, 0.4);
+    animation: twinkle 1.8s ease-in-out infinite;
+  }
+  .hero-badge::before {
+    top: -8px;
+    right: -16px;
+    font-size: 24px;
+  }
+  .hero-badge::after {
+    bottom: 2px;
+    left: -20px;
+    font-size: 16px;
+    animation-delay: 0.9s;
+  }
+  .hero-ring {
+    position: absolute;
+    inset: -14px;
+    border-radius: 9999px;
+    border: 3px dashed rgba(255, 255, 255, 0.35);
+    animation: spin 14s linear infinite;
+  }
+
+  /* Scritta AXEND: le lettere cadono una alla volta, poi un riflesso le attraversa */
+  .hero-title {
+    display: inline-flex;
+    color: #ffd02e;
+    letter-spacing: 0.04em;
+    text-shadow: 0 5px 0 #d97a00, 0 11px 0 rgba(22, 6, 72, 0.5);
+  }
+  .hero-title > span {
+    display: inline-block;
+    animation: letterDrop 0.7s cubic-bezier(0.25, 1.7, 0.45, 1) both, letterWave 4s ease-in-out infinite;
+    animation-delay: calc(var(--i) * 70ms), calc(1.2s + var(--i) * 120ms);
+  }
+  @keyframes letterDrop {
+    from {
+      opacity: 0;
+      transform: translateY(-60px) rotate(-14deg) scale(0.6);
+    }
+  }
+  @keyframes letterWave {
+    0%,
+    70%,
+    100% {
+      transform: none;
+    }
+    80% {
+      transform: translateY(-7px) rotate(-4deg);
+    }
+  }
+  .hero-sub {
+    background: linear-gradient(90deg, #fff 0%, #fff 40%, #6fdcff 50%, #fff 60%, #fff 100%);
+    background-size: 250% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: textShine 3.5s linear infinite;
+    text-shadow: none;
+    filter: drop-shadow(0 3px 0 rgba(26, 8, 80, 0.55));
+  }
+  @keyframes textShine {
+    from {
+      background-position: 100% 0;
+    }
+    to {
+      background-position: -150% 0;
+    }
+  }
+
+  /* Copertine dei giochi: zoom lentissimo, come un trailer */
+  .kenburns {
+    animation: kenburns 9s ease-in-out infinite alternate;
+  }
+  @keyframes kenburns {
+    to {
+      transform: scale(1.1) translate(-2%, -2%);
+    }
+  }
+
+  /* "In diretta": pallino con onda */
+  .live-dot {
+    position: relative;
+    width: 10px;
+    height: 10px;
+    border-radius: 9999px;
+    background: #7ddc45;
+  }
+  .live-dot::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: inherit;
+    animation: ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+  .live-dot.amber {
+    background: #ffd02e;
+  }
+  @keyframes ping {
+    75%,
+    100% {
+      transform: scale(2.6);
+      opacity: 0;
+    }
+  }
+
+  /* Radar della lista vuota */
+  .radar {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgba(125, 220, 69, 0.25) 0 2px, transparent 3px), repeating-radial-gradient(circle, rgba(255, 255, 255, 0.14) 0 1px, transparent 2px 12px);
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    overflow: hidden;
+  }
+  .radar::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: conic-gradient(from 0deg, rgba(125, 220, 69, 0.55), transparent 70deg);
+    animation: spin 2.2s linear infinite;
+  }
+
+  /* Segnaposto che luccica mentre arrivano i dati */
+  .skeleton {
+    background: linear-gradient(100deg, rgba(255, 255, 255, 0.06) 30%, rgba(255, 255, 255, 0.16) 50%, rgba(255, 255, 255, 0.06) 70%);
+    background-size: 300% 100%;
+    animation: skeleton 1.4s linear infinite;
+  }
+  @keyframes skeleton {
+    from {
+      background-position: 100% 0;
+    }
+    to {
+      background-position: -100% 0;
+    }
+  }
+
+  /* ================= Schermata d'inizio partita ================= */
+
+  .splash {
+    background: radial-gradient(circle at 50% 45%, rgba(90, 53, 224, 0.92), rgba(28, 10, 80, 0.97) 70%);
+    animation: splashLife 1.7s ease both;
+  }
+  .splash-rays {
+    position: absolute;
+    left: 50%;
+    top: 45%;
+    width: 180vmax;
+    height: 180vmax;
+    margin: -90vmax 0 0 -90vmax;
+    background: repeating-conic-gradient(rgba(255, 208, 46, 0.16) 0deg 9deg, transparent 9deg 18deg);
+    animation: spin 9s linear infinite;
+  }
+  .splash-card {
+    animation: splashCard 0.75s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+  }
+  .splash-title {
+    animation: splashTitle 0.6s cubic-bezier(0.2, 1.6, 0.4, 1) 0.2s both;
+  }
+  .splash-sub {
+    animation: rise 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) 0.4s both;
+  }
+  @keyframes splashLife {
+    0% {
+      opacity: 0;
+    }
+    10%,
+    78% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      visibility: hidden;
+    }
+  }
+  @keyframes splashCard {
+    from {
+      opacity: 0;
+      transform: scale(0.3) rotate(-14deg);
+    }
+  }
+  @keyframes splashTitle {
+    from {
+      opacity: 0;
+      transform: scale(2.2);
+    }
+  }
+
+  /* ================= Giochi ================= */
+
+  /* Passa la bomba */
+  .bomb-shake {
+    animation: bombShake 0.3s ease-in-out infinite;
+  }
+  .bomb-idle {
+    animation: bob 2.6s ease-in-out infinite;
+  }
+  .boom {
+    animation: popIn 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+  }
+  @keyframes bombShake {
+    0%,
+    100% {
+      transform: rotate(-7deg) scale(1.02);
+    }
+    50% {
+      transform: rotate(7deg) scale(1.08);
+    }
+  }
+
+  /* Carta del ruolo che si gira al tocco */
+  .flip {
+    perspective: 1200px;
+  }
+  .flip-inner {
+    transform-style: preserve-3d;
+    transition: transform 0.7s cubic-bezier(0.2, 1.25, 0.3, 1);
+  }
+  .flip.open .flip-inner {
+    transform: rotateY(180deg);
+  }
+  .flip-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  .flip-back {
+    transform: rotateY(180deg);
+  }
+  /* il dito che invita a toccare la carta */
+  .tap-hint {
+    animation: tapHint 1.6s ease-in-out infinite;
+  }
+  @keyframes tapHint {
+    0%,
+    100% {
+      transform: translateY(0) scale(1);
+    }
+    40% {
+      transform: translateY(6px) scale(0.92);
+    }
+  }
+
+  /* Rullo di tamburi prima di svelare */
+  .drum {
+    animation: drum 0.12s linear infinite;
+  }
+  @keyframes drum {
+    0%,
+    100% {
+      transform: rotate(-6deg) scale(1);
+    }
+    50% {
+      transform: rotate(6deg) scale(1.08);
+    }
+  }
+  .reveal-pop {
+    animation: revealPop 0.7s cubic-bezier(0.2, 1.8, 0.4, 1) both;
+  }
+  @keyframes revealPop {
+    from {
+      opacity: 0;
+      transform: scale(0.2) rotate(-25deg);
+    }
+  }
+
+  /* Lampo bianco dell'esplosione */
+  .flash {
+    animation: flash 0.6s ease-out both;
+  }
+  @keyframes flash {
+    from {
+      opacity: 0.85;
+    }
+    to {
+      opacity: 0;
+      visibility: hidden;
+    }
+  }
+
+  /* Conto alla rovescia agli ultimi secondi */
+  .urgent {
+    animation: urgent 0.5s ease-in-out infinite alternate;
+  }
+  @keyframes urgent {
+    to {
+      transform: scale(1.12);
+    }
+  }
+
+  /* ================= Classifiche e giochi di gruppo ================= */
+
+  /* Podio: i gradini salgono, i giocatori ci cadono sopra */
+  .podium-step {
+    transform-origin: bottom;
+    animation: stepUp 0.6s cubic-bezier(0.2, 1.3, 0.4, 1) both;
+  }
+  @keyframes stepUp {
+    from {
+      transform: scaleY(0);
+    }
+  }
+  .podium-avatar {
+    animation: dropIn 0.75s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+  }
+  @keyframes dropIn {
+    from {
+      opacity: 0;
+      transform: translateY(-90px) scale(0.5);
+    }
+  }
+
+  /* Punti che volano via */
+  .points-pop {
+    animation: pointsPop 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    text-shadow: 0 3px 0 #d97a00;
+  }
+  @keyframes pointsPop {
+    0% {
+      opacity: 0;
+      transform: translateY(10px) scale(0.6);
+    }
+    20% {
+      opacity: 1;
+      transform: translateY(-6px) scale(1.25);
+    }
+    75% {
+      opacity: 1;
+      transform: translateY(-26px) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-40px) scale(0.9);
+    }
+  }
+
+  /* Bollino "VS" / "OPPURE" che pulsa */
+  .vs-badge {
+    animation: vsPulse 1.4s ease-in-out infinite;
+    box-shadow: 0 0 0 4px rgba(255, 208, 46, 0.25), 0 6px 0 rgba(22, 6, 72, 0.5);
+  }
+  @keyframes vsPulse {
+    50% {
+      scale: 1.12;
+    }
+  }
+
+  /* Barre delle percentuali che si riempiono */
+  .fill-bar {
+    animation: fillBar 1s cubic-bezier(0.2, 1, 0.3, 1) 0.15s both;
+  }
+  @keyframes fillBar {
+    from {
+      width: 0;
+    }
+  }
+
+  /* Sintonia: il bersaglio si apre come un ventaglio */
+  .dial-target {
+    transform-box: view-box;
+    transform-origin: 160px 165px;
+    animation: dialReveal 0.8s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  }
+  @keyframes dialReveal {
+    from {
+      opacity: 0;
+      transform: scale(0.1) rotate(-50deg);
+    }
+  }
+  .dial-needle {
+    animation: fadeIn 0.5s ease 0.5s both;
+  }
+
+  /* Parola proibita: ogni carta nuova entra di lato */
+  .tabu-card {
+    animation: cardIn 0.45s cubic-bezier(0.2, 1.3, 0.4, 1) both;
+  }
+  @keyframes cardIn {
+    from {
+      opacity: 0;
+      transform: translateX(70px) rotate(7deg);
+    }
+  }
+
+  /* Bollino NUOVO */
+  .new-badge {
+    animation: newBadge 2.4s ease-in-out infinite;
+  }
+  @keyframes newBadge {
+    0%,
+    100% {
+      rotate: -6deg;
+    }
+    50% {
+      rotate: 6deg;
+      scale: 1.08;
+    }
+  }
+
+  /* Dadi: lancio e rotolata */
+  .dice-roll {
+    display: inline-block;
+    animation: diceRoll 0.7s cubic-bezier(0.2, 1.3, 0.4, 1) both;
+  }
+  @keyframes diceRoll {
+    from {
+      opacity: 0;
+      transform: translateY(-40px) rotate(-200deg) scale(0.5);
+    }
+  }
+  .dice-spin {
+    display: inline-block;
+    animation: diceSpin 0.65s cubic-bezier(0.2, 1.2, 0.4, 1) both;
+  }
+  @keyframes diceSpin {
+    0% {
+      transform: rotate(-540deg) scale(0.3);
+    }
+    70% {
+      transform: rotate(15deg) scale(1.15);
+    }
+  }
+
+  /* ===== Axend Party: stile "mobile game" (pulsanti a rilievo, pannelli, testo con contorno) ===== */
+  .sc-stroke {
+    paint-order: stroke fill;
+    -webkit-text-stroke: 7px #1d0f3d;
+    text-shadow: 0 5px 0 #1d0f3d;
+  }
+  .sc-stroke-sm {
+    paint-order: stroke fill;
+    -webkit-text-stroke: 4px #1d0f3d;
+    text-shadow: 0 3px 0 #1d0f3d;
+  }
+  .sc-btn {
+    position: relative;
+    border: 4px solid #1d0f3d;
+    border-radius: 18px;
+    box-shadow:
+      inset 0 -6px 0 rgba(0, 0, 0, 0.22),
+      inset 0 3px 0 rgba(255, 255, 255, 0.45),
+      0 5px 0 #1d0f3d;
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
+  }
+  .sc-btn:active {
+    transform: translateY(4px);
+    box-shadow:
+      inset 0 -3px 0 rgba(0, 0, 0, 0.22),
+      inset 0 3px 0 rgba(255, 255, 255, 0.45),
+      0 1px 0 #1d0f3d;
+  }
+  .sc-yellow {
+    background: linear-gradient(#ffe259, #ffb703);
+    color: #1d0f3d;
+  }
+  .sc-blue {
+    background: linear-gradient(#5fd0ff, #2f6bff);
+    color: #fff;
+  }
+  .sc-red {
+    background: linear-gradient(#ff7a8a, #e5173f);
+    color: #fff;
+  }
+  .sc-green {
+    background: linear-gradient(#7cf29a, #12b76a);
+    color: #fff;
+  }
+  .sc-purple {
+    background: linear-gradient(#b67bff, #6a1fd1);
+    color: #fff;
+  }
+  .sc-dark {
+    background: linear-gradient(#3b2d72, #1f1347);
+    color: #fff;
+  }
+  .sc-panel {
+    border: 5px solid #1d0f3d;
+    border-radius: 26px;
+    background: linear-gradient(180deg, #4a2f9e 0%, #2a1866 100%);
+    box-shadow:
+      inset 0 3px 0 rgba(255, 255, 255, 0.18),
+      inset 0 0 0 3px rgba(255, 255, 255, 0.06),
+      0 8px 0 #1d0f3d,
+      0 18px 40px rgba(10, 4, 40, 0.45);
+  }
+  .sc-chip {
+    border: 3px solid #1d0f3d;
+    border-radius: 999px;
+    background: rgba(29, 15, 61, 0.78);
+    box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.15);
+  }
+  .sc-range {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 18px;
+    border-radius: 999px;
+    border: 3px solid #1d0f3d;
+    background: linear-gradient(90deg, #ffb703 var(--fill, 50%), #1f1347 var(--fill, 50%));
+  }
+  .sc-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 4px solid #1d0f3d;
+    background: linear-gradient(#ffffff, #d9d9ff);
+    box-shadow: 0 3px 0 #1d0f3d;
+  }
+  .sc-range::-moz-range-thumb {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 4px solid #1d0f3d;
+    background: #ffffff;
+  }
+  /* entrata del minigioco: banda in diagonale che sfreccia */
+  .swoosh {
+    animation: swoosh 0.6s cubic-bezier(0.2, 0.9, 0.25, 1.2) both;
+  }
+  @keyframes swoosh {
+    0% {
+      transform: translateX(-120%) skewX(-12deg);
+    }
+    100% {
+      transform: translateX(0) skewX(-6deg);
+    }
+  }
+  .swoosh-in {
+    animation: swooshIn 0.55s 0.15s cubic-bezier(0.2, 0.9, 0.25, 1.3) both;
+  }
+  @keyframes swooshIn {
+    0% {
+      transform: scale(0.3) rotate(-10deg);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1) rotate(0);
+      opacity: 1;
+    }
+  }
+  .count-pop {
+    animation: countPop 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+  }
+  @keyframes countPop {
+    0% {
+      transform: scale(2.6);
+      opacity: 0;
+    }
+    30% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    80% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(0.7);
+      opacity: 0;
+    }
+  }
+  .sticker-pop {
+    animation: stickerPop 2.4s cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
+  }
+  @keyframes stickerPop {
+    0% {
+      transform: scale(0) rotate(-30deg);
+      opacity: 0;
+    }
+    18% {
+      transform: scale(1.15) rotate(var(--tilt, 0deg));
+      opacity: 1;
+    }
+    26% {
+      transform: scale(1) rotate(var(--tilt, 0deg));
+    }
+    85% {
+      transform: scale(1) rotate(var(--tilt, 0deg));
+      opacity: 1;
+    }
+    100% {
+      transform: scale(0.6) rotate(var(--tilt, 0deg)) translateY(-30px);
+      opacity: 0;
+    }
+  }
+  .feed-in {
+    animation: feedIn 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+  }
+  @keyframes feedIn {
+    0% {
+      transform: translateX(60px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  .pulse-soft {
+    animation: pulseSoft 1s ease-in-out infinite;
+  }
+  @keyframes pulseSoft {
+    50% {
+      transform: scale(1.06);
+    }
+  }
+
+  /* Astro Impostori: allarme rosso dei sabotaggi (reattore, ossigeno) */
+  .alarm-vignette {
+    box-shadow: inset 0 0 130px 36px rgba(255, 30, 60, 0.8);
+    animation: alarmPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes alarmPulse {
+    0%,
+    100% {
+      opacity: 0.2;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+  .alarm-blink {
+    animation: alarmBlink 0.8s steps(1, end) infinite;
+  }
+  @keyframes alarmBlink {
+    50% {
+      background-color: rgba(127, 29, 29, 0.94);
+    }
+  }
+
+  /* Astro Impostori: l'espulso vola via nello spazio */
+  .eject-fly {
+    animation: ejectFly 4.5s linear both;
+  }
+  @keyframes ejectFly {
+    from {
+      transform: translateX(-75vw) rotate(0deg);
+    }
+    to {
+      transform: translateX(75vw) rotate(720deg);
+    }
+  }
+
+  /* ================= Utility ================= */
+
+  @keyframes bob {
+    50% {
+      transform: translateY(-8px) rotate(-4deg);
+    }
+  }
+  @keyframes twinkle {
+    50% {
+      transform: scale(0.6) rotate(20deg);
+      opacity: 0.6;
+    }
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  .float {
+    animation: bob 3s ease-in-out infinite;
+  }
+  .wiggle {
+    animation: wiggle 1.2s ease-in-out infinite;
+  }
+  @keyframes wiggle {
+    0%,
+    100% {
+      transform: rotate(0);
+    }
+    25% {
+      transform: rotate(-12deg) scale(1.1);
+    }
+    75% {
+      transform: rotate(12deg) scale(1.1);
+    }
+  }
+
+  @keyframes floatUp {
+    0% {
+      opacity: 0;
+      transform: translateY(20px) scale(0.8);
+    }
+    20% {
+      opacity: 1;
+      transform: translateY(0) scale(1.05);
+    }
+    80% {
+      opacity: 1;
+      transform: translateY(-80px) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-120px) scale(0.9);
+    }
+  }
+  .animate-float-up {
+    animation: floatUp 3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+
+  @keyframes shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    20%,
+    60% {
+      transform: translateX(-6px);
+    }
+    40%,
+    80% {
+      transform: translateX(6px);
+    }
+  }
+  .animate-shake {
+    animation: shake 0.4s ease-in-out;
+  }
+}
+
+/* Chi preferisce meno movimento (impostazione del telefono) lo ottiene */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .fx {
+    display: none;
+  }
+}
+
+/* Scrollbar in tinta */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(44, 21, 119, 0.6);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(129, 102, 224, 0.8);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(184, 166, 253, 1);
+}
+
+/* Telefono in orizzontale: la pagina arriva fino ai bordi (viewport-fit=cover), i contenuti restano fuori dalla tacca */
+#root {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}

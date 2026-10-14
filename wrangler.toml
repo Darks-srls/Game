@@ -1,0 +1,17 @@
+name = "gioco-spia"
+main = "worker/index.ts"
+compatibility_date = "2025-10-01"
+
+# Frontend React compilato da Vite (npm run build)
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+
+# Un Durable Object tiene lo stato delle stanze (piano gratuito: backend SQLite)
+[[durable_objects.bindings]]
+name = "GAME"
+class_name = "GameServer"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["GameServer"]

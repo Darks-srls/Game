@@ -1,0 +1,187 @@
+import type { LocationItem } from '../types/game';
+
+// Luoghi del gioco: [icona, nome, ruoli]. Ruoli brevi e specifici di ogni luogo.
+const RAW: Record<string, [string, string, string][]> = {
+  'Città & Servizi': [
+    ['🏥', 'Ospedale', 'Medico, Infermiere, Chirurgo, Paziente, Anestesista, Barelliere, Visitatore, Primario'],
+    ['🏦', 'Banca', 'Cassiere, Direttore, Cliente, Guardia giurata, Consulente, Rapinatore, Impiegato'],
+    ['🛒', 'Supermercato', 'Cassiera, Cliente, Magazziniere, Macellaio, Direttore, Scaffalista, Guardia'],
+    ['💊', 'Farmacia', 'Farmacista, Cliente, Commesso, Rappresentante, Magazziniere, Medico, Anziano'],
+    ['🥖', 'Panetteria', 'Panettiere, Pasticcere, Cassiera, Cliente, Fattorino, Fornitore di farina, Apprendista'],
+    ['🥩', 'Macelleria', 'Macellaio, Cliente, Cassiere, Fornitore, Apprendista, Ispettore sanitario'],
+    ['💇', 'Parrucchiere', 'Parrucchiere, Cliente, Barbiere, Estetista, Apprendista, Shampista, Cassiera'],
+    ['📮', 'Ufficio postale', 'Impiegato, Postino, Cliente, Pensionato, Direttore, Guardia, Corriere'],
+    ['🚓', 'Commissariato', 'Commissario, Agente, Detenuto, Avvocato, Testimone, Centralinista, Ispettore'],
+    ['🚒', 'Caserma dei pompieri', 'Pompiere, Caposquadra, Autista, Centralinista, Recluta, Cuoco, Istruttore'],
+    ['🏛️', 'Municipio', 'Sindaco, Assessore, Impiegato, Vigile urbano, Cittadino, Segretario, Giornalista'],
+    ['⛪', 'Chiesa', 'Prete, Sacrestano, Suora, Fedele, Chierichetto, Organista, Turista'],
+    ['⛽', 'Distributore di benzina', 'Benzinaio, Automobilista, Camionista, Motociclista, Cassiere, Meccanico'],
+    ['🧺', 'Lavanderia', 'Titolare, Cliente, Studente, Stiratrice, Fattorino, Pensionato, Tecnico'],
+    ['🏬', 'Centro commerciale', 'Commesso, Guardia, Cliente, Addetto pulizie, Direttore, Promoter, Bambino smarrito'],
+    ['🐶', 'Veterinario', 'Veterinario, Assistente, Padrone del cane, Padrona del gatto, Allevatore, Segretaria'],
+    ['🦷', 'Dentista', 'Dentista, Paziente, Assistente, Igienista, Segretaria, Bambino, Odontotecnico'],
+    ['🥕', 'Mercato rionale', 'Fruttivendolo, Pescivendolo, Casalinga, Vigile urbano, Turista, Ambulante, Pensionato'],
+    ['🏢', 'Condominio', 'Portinaio, Amministratore, Inquilino, Vicino rumoroso, Idraulico, Postino, Studente'],
+    ['⚰️', 'Cimitero', 'Custode, Becchino, Vedova, Prete, Fioraio, Visitatore, Marmista'],
+    ['🚗', 'Autolavaggio', 'Lavaggista, Cliente, Cassiere, Titolare, Tassista, Camionista'],
+  ],
+  'Svago & Locali': [
+    ['🍝', 'Ristorante', 'Chef, Cameriere, Sommelier, Cliente, Lavapiatti, Critico gastronomico, Maître'],
+    ['🍕', 'Pizzeria', 'Pizzaiolo, Cameriere, Fattorino, Cliente, Cassiere, Aiuto cuoco, Famiglia'],
+    ['☕', 'Bar', 'Barista, Cliente abituale, Cameriere, Pensionato, Studente, Fornitore, Vigile'],
+    ['🍺', 'Pub', 'Barista, Buttafuori, Cliente, Tifoso, Musicista, Cameriera, Turista'],
+    ['💃', 'Discoteca', 'DJ, Buttafuori, Barista, Ballerino, Cubista, PR, Guardarobiera'],
+    ['🎬', 'Cinema', 'Cassiere, Proiezionista, Spettatore, Maschera, Venditore di popcorn, Critico'],
+    ['🎭', 'Teatro', 'Attore, Regista, Tecnico luci, Spettatore, Suggeritore, Costumista, Maschera'],
+    ['🖼️', 'Museo', "Guida, Custode, Turista, Restauratore, Direttore, Scolaro, Ladro d'arte"],
+    ['🦁', 'Zoo', 'Guardiano, Veterinario, Visitatore, Bambino, Fotografo, Gelataio, Biologo'],
+    ['🐠', 'Acquario', 'Biologo marino, Sub, Guida, Visitatore, Addestratore, Bambino, Custode'],
+    ['🎡', 'Luna park', 'Giostraio, Bambino, Genitore, Venditore di zucchero filato, Guardia, Coppia, Clown'],
+    ['🎪', 'Circo', 'Clown, Acrobata, Domatore, Giocoliere, Presentatore, Spettatore, Mangiafuoco'],
+    ['🎰', 'Casinò', 'Croupier, Giocatore, Buttafuori, Direttore, Barista, Milionario, Baro'],
+    ['🏟️', 'Stadio', 'Calciatore, Arbitro, Allenatore, Tifoso, Steward, Giornalista, Mascotte'],
+    ['🎸', 'Concerto rock', 'Cantante, Chitarrista, Batterista, Fan, Tecnico del suono, Buttafuori, Manager'],
+    ['🎳', 'Bowling', 'Giocatore, Barista, Addetto alle scarpe, Campione, Festeggiato, Cassiere, Principiante'],
+    ['💒', 'Matrimonio', 'Sposo, Sposa, Testimone, Prete, Fotografo, Cameriere, Suocera, Invitato'],
+    ['🎂', 'Festa di compleanno', 'Festeggiato, Animatore, Invitato, Genitore, Pasticcere, Mago, Vicino di casa'],
+    ['🧖', 'Spa', 'Massaggiatore, Estetista, Cliente, Receptionist, Istruttore di yoga, Direttore'],
+    ['🕹️', 'Sala giochi', 'Gestore, Giocatore, Bambino, Campione, Genitore, Tecnico, Cassiere'],
+    ['🎤', 'Karaoke', 'Cantante stonato, Presentatore, Barista, Festeggiato, Tecnico, Cliente timido'],
+    ['🔐', 'Escape room', 'Game master, Giocatore, Attore, Gestore, Cassiere, Squadra rivale'],
+    ['🍦', 'Gelateria', 'Gelataio, Cliente, Bambino, Cassiere, Fornitore, Turista, Coppia'],
+    ['🍣', 'Ristorante sushi', 'Sushi chef, Cameriere, Cliente, Cassiere, Fattorino, Aiuto cuoco'],
+  ],
+  'Viaggi & Mezzi': [
+    ['✈️', 'Aereo', 'Pilota, Copilota, Hostess, Steward, Passeggero, Bambino, Agente di scorta'],
+    ['🛫', 'Aeroporto', 'Controllore di volo, Addetto bagagli, Poliziotto di frontiera, Passeggero, Hostess di terra, Addetto sicurezza, Tassista'],
+    ['🚆', 'Treno', 'Capotreno, Macchinista, Controllore, Passeggero, Barista, Pendolare, Studente'],
+    ['🚉', 'Stazione ferroviaria', 'Capostazione, Bigliettaio, Viaggiatore, Facchino, Edicolante, Poliziotto, Pendolare'],
+    ['🛳️', 'Nave da crociera', 'Capitano, Cameriere, Animatore, Turista, Cuoco, Musicista, Medico di bordo'],
+    ['⛴️', 'Traghetto', 'Capitano, Marinaio, Camionista, Turista, Barista, Addetto alle auto'],
+    ['🚌', 'Autobus', 'Autista, Controllore, Passeggero, Studente, Anziana, Borseggiatore, Turista'],
+    ['🚕', 'Taxi', "Tassista, Cliente, Turista, Uomo d'affari, Vigile, Passeggero in ritardo"],
+    ['🚇', 'Metropolitana', 'Macchinista, Controllore, Pendolare, Musicista di strada, Borseggiatore, Turista, Guardia'],
+    ['🏨', 'Hotel', 'Receptionist, Portiere, Cameriera ai piani, Ospite, Direttore, Facchino, Chef'],
+    ['🏕️', 'Campeggio', 'Campeggiatore, Gestore, Scout, Bagnino, Turista, Guardaparco, Bambino'],
+    ['🛣️', 'Autogrill', 'Barista, Camionista, Cassiere, Famiglia in viaggio, Motociclista, Poliziotto stradale'],
+    ['⚓', 'Porto', 'Capitano, Marinaio, Pescatore, Doganiere, Scaricatore, Turista, Pescivendolo'],
+    ['🏝️', 'Villaggio vacanze', 'Animatore, Bagnino, Turista, Barista, Direttore, Cuoco, Istruttore di aerobica'],
+    ['🚀', 'Stazione spaziale', 'Astronauta, Comandante, Scienziato, Ingegnere, Medico, Turista spaziale'],
+    ['🎈', 'Mongolfiera', 'Pilota, Passeggero, Fotografo, Coppia romantica, Meteorologo, Assistente a terra'],
+    ['🌊', 'Sottomarino', 'Capitano, Ufficiale sonar, Marinaio, Cuoco, Ingegnere, Medico, Radiotelegrafista'],
+  ],
+  'Lavoro & Studio': [
+    ['🏫', 'Scuola', 'Maestra, Preside, Studente, Bidello, Genitore, Professore di ginnastica, Supplente'],
+    ['🎓', 'Università', 'Professore, Studente, Rettore, Ricercatore, Segretario, Fuoricorso, Assistente'],
+    ['📚', 'Biblioteca', 'Bibliotecario, Studente, Lettore, Scrittore, Archivista, Custode, Bambino'],
+    ['💼', 'Ufficio', 'Capo, Segretaria, Impiegato, Stagista, Informatico, Addetto pulizie, Consulente'],
+    ['🏭', 'Fabbrica', 'Operaio, Caporeparto, Ingegnere, Magazziniere, Sindacalista, Direttore, Carrellista'],
+    ['🏗️', 'Cantiere', 'Muratore, Geometra, Architetto, Gruista, Capocantiere, Elettricista, Ispettore'],
+    ['🔬', 'Laboratorio di ricerca', 'Scienziato, Assistente, Tecnico, Dottorando, Direttore, Volontario per i test'],
+    ['📺', 'Studio televisivo', 'Presentatore, Regista, Cameraman, Truccatore, Ospite, Concorrente, Pubblico'],
+    ['⚖️', 'Tribunale', 'Giudice, Avvocato, Imputato, Testimone, Cancelliere, Giurato, Poliziotto'],
+    ['🔒', 'Prigione', 'Detenuto, Guardia, Direttore, Avvocato, Cuoco, Cappellano, Visitatore'],
+    ['🎖️', 'Base militare', 'Generale, Soldato, Sergente, Recluta, Pilota, Cuoco, Medico'],
+    ['🐄', 'Fattoria', 'Contadino, Allevatore, Veterinario, Trattorista, Bracciante, Bambino in gita'],
+    ['🔧', 'Officina meccanica', 'Meccanico, Gommista, Carrozziere, Cliente, Apprendista, Titolare, Elettrauto'],
+    ['🎧', 'Call center', 'Operatore, Supervisore, Cliente arrabbiato, Stagista, Tecnico, Responsabile'],
+    ['🧸', 'Asilo', 'Maestra, Bambino, Genitore, Cuoca, Bidella, Pediatra, Nonno'],
+    ['🗞️', 'Redazione di giornale', 'Direttore, Giornalista, Fotografo, Grafico, Stagista, Inviato'],
+    ['🍳', 'Cucina di un ristorante', 'Chef, Sous-chef, Lavapiatti, Pasticcere, Cameriere, Fornitore, Critico'],
+  ],
+  'Natura & Sport': [
+    ['🏖️', 'Spiaggia', 'Bagnino, Turista, Venditore ambulante, Surfista, Bambino, Gestore del lido, Pescatore'],
+    ['⛰️', 'Rifugio di montagna', 'Rifugista, Alpinista, Guida alpina, Escursionista, Cuoco, Soccorritore'],
+    ['⛷️', 'Pista da sci', 'Maestro di sci, Sciatore, Snowboarder, Addetto seggiovia, Soccorritore, Principiante'],
+    ['🏋️', 'Palestra', 'Personal trainer, Culturista, Principiante, Istruttore di spinning, Receptionist, Nutrizionista'],
+    ['🏊', 'Piscina', 'Bagnino, Nuotatore, Istruttore, Bambino, Allenatore, Tuffatore'],
+    ['⚽', 'Campo da calcio', 'Calciatore, Allenatore, Arbitro, Portiere, Tifoso, Magazziniere, Raccattapalle'],
+    ['🌳', 'Parco', 'Giardiniere, Jogger, Padrone del cane, Bambino, Gelataio, Pensionato, Coppia'],
+    ['🎣', 'Lago', 'Pescatore, Canoista, Guardapesca, Campeggiatore, Bagnante, Noleggiatore di barche'],
+    ['🌲', 'Bosco', 'Guardia forestale, Boscaiolo, Cercatore di funghi, Cacciatore, Escursionista, Scout'],
+    ['🌴', 'Isola deserta', 'Naufrago, Esploratore, Pilota, Pescatore, Scienziato, Turista disperso'],
+    ['🐪', 'Deserto', 'Esploratore, Carovaniere, Beduino, Archeologo, Fotografo, Pilota di rally'],
+    ['🦜', 'Giungla', 'Esploratore, Guida, Biologo, Fotografo, Cacciatore di tesori, Botanico'],
+    ['🐎', 'Maneggio', 'Istruttore, Fantino, Stalliere, Veterinario, Allievo, Proprietario, Maniscalco'],
+    ['⛳', 'Campo da golf', 'Golfista, Caddie, Istruttore, Giardiniere, Barista del club, Principiante'],
+    ['⛵', 'Barca a vela', 'Skipper, Marinaio, Turista, Cuoco di bordo, Timoniere, Mozzo'],
+    ['💦', 'Parco acquatico', 'Bagnino, Bambino, Genitore, Addetto agli scivoli, Gelataio, Animatore'],
+    ['🎾', 'Campo da tennis', 'Tennista, Maestro, Raccattapalle, Arbitro, Barista, Socio del club'],
+    ['🌋', 'Vulcano', 'Vulcanologo, Guida, Turista, Fotografo, Geologo, Pilota di elicottero'],
+  ],
+  'Mistero & Avventura': [
+    ['🏰', 'Castello', 'Re, Regina, Cavaliere, Giullare, Principessa, Guardia, Cuoco, Mago'],
+    ['🏴‍☠️', 'Nave pirata', 'Capitano, Pirata, Mozzo, Prigioniero, Cuoco, Vedetta, Cannoniere'],
+    ['👻', 'Casa stregata', 'Fantasma, Medium, Acchiappafantasmi, Proprietario, Maggiordomo, Esorcista'],
+    ['🔺', 'Piramide', 'Archeologo, Faraone, Mummia, Guida turistica, Tombarolo, Esploratore'],
+    ['⛏️', 'Miniera', "Minatore, Caposquadra, Ingegnere, Geologo, Cercatore d'oro, Esplosivista"],
+    ['🗼', 'Faro', 'Guardiano del faro, Naufrago, Pescatore, Turista, Fotografo, Meteorologo'],
+    ['🕶️', 'Base segreta', 'Agente segreto, Scienziato, Guardia, Hacker, Generale, Doppiogiochista'],
+    ['🎥', 'Set cinematografico', 'Regista, Attore, Stuntman, Truccatore, Comparsa, Produttore, Cameraman'],
+    ['🦖', 'Parco dei dinosauri', 'Paleontologo, Guardiano, Turista, Veterinario, Cacciatore, Direttore'],
+    ['🕳️', 'Grotta', 'Speleologo, Geologo, Guida, Turista, Esploratore, Soccorritore'],
+    ['🤠', 'Saloon del Far West', 'Sceriffo, Barista, Cowboy, Pistolero, Ballerina, Pianista, Bandito'],
+    ['🛸', 'Astronave aliena', 'Alieno, Rapito, Comandante, Pilota, Scienziato, Robot'],
+    ['⚔️', 'Colosseo', 'Gladiatore, Imperatore, Senatore, Legionario, Mercante, Spettatore'],
+    ['🧙', 'Scuola di magia', 'Mago, Strega, Studente, Preside, Custode, Insegnante di pozioni'],
+    ['🔎', 'Scena del crimine', 'Detective, Poliziotto, Medico legale, Testimone, Sospettato, Giornalista, Fotografo'],
+    ['❄️', 'Base al Polo Nord', 'Esploratore, Scienziato, Cuoco, Pilota, Meteorologo, Medico'],
+  ],
+};
+
+export const CATEGORY_ICONS: Record<string, string> = {
+  'Città & Servizi': '🏙️',
+  'Svago & Locali': '🎉',
+  'Viaggi & Mezzi': '✈️',
+  'Lavoro & Studio': '💼',
+  'Natura & Sport': '🌲',
+  'Mistero & Avventura': '🗝️',
+};
+
+export const LOCATION_CATEGORIES = Object.keys(RAW);
+
+
+
+const slug = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+
+export const DEFAULT_LOCATIONS: LocationItem[] = Object.entries(RAW).flatMap(([category, list]) =>
+  list.map(([icon, name, roles]) => ({ id: slug(name), name, category, icon, roles: roles.split(', ') })),
+);
+
+// 🌶️ Luoghi piccanti: entrano in gioco solo con i contenuti piccanti attivi
+const RAW_SPICY: [string, string, string][] = [
+  ['🍾', 'Addio al celibato', 'Sposo, Testimone, Amico ubriaco, Spogliarellista, Autista del pulmino, Barista, Cugino imbucato'],
+  ['👰', 'Addio al nubilato', 'Sposa, Damigella, Amica single, Spogliarellista, Organizzatrice, Barista, Suocera infiltrata'],
+  ['🛏️', 'Motel a ore', 'Receptionist, Coppia clandestina, Investigatore privato, Cameriera, Marito tradito, Portiere di notte'],
+  ['🏠', 'Festa in casa senza genitori', 'Padrone di casa, Imbucato, DJ improvvisato, Vicino che chiama i carabinieri, Ubriaco sul divano, Genitore che rientra'],
+  ['🚑', 'Pronto soccorso il sabato notte', 'Medico di turno, Infermiere, Ubriaco, Ragazzo col dito rotto, Vigilante, Mamma preoccupata'],
+  ['🍔', 'Fast food alle 4 di notte', 'Cassiere, Ubriaco affamato, Rider, Guardia, Coppia appena conosciuta, Cuoco'],
+  ['🥂', 'Cena aziendale', 'Capo, Stagista, Collega ubriaco, Segretaria, Cameriere, Leccapiedi, Quello delle risorse umane'],
+  ['🚕', 'Taxi alle 5 di mattina', 'Tassista, Ubriaco che canta, Coppia che litiga, Ragazza con le scarpe in mano, Turista perso, Quello che sta per vomitare'],
+  ['💘', 'Speed date', 'Single disperato, Organizzatrice, Barista, Mammone, Bugiarda seriale, Fidanzato in incognito'],
+  ['🍻', 'Sagra della birra', 'Cameriera, Turista ubriaco, Musicista, Barista, Campione di bevute, Volontario della Croce Rossa'],
+  ['🛥️', 'Festa in barca a Ibiza', 'DJ, Influencer, Barista, Turista ustionato, Capitano, PR, Quello col mal di mare'],
+  ['🏝️', 'Spiaggia per nudisti', 'Nudista esperto, Turista imbarazzato, Bagnino, Venditore di cocco, Fotografo beccato, Pensionato abbronzatissimo'],
+  ['🚔', 'Camera di sicurezza', 'Ubriaco molesto, Poliziotto, Avvocato, Tifoso arrestato, Turista sperduto, Ladro di biciclette'],
+  ['🧖', 'Sauna', 'Anziano senza asciugamano, Bagnino, Massaggiatrice, Palestrato, Turista tedesco, Uomo d’affari'],
+  ['🎓', 'Festa Erasmus', 'Studente spagnolo, Organizzatore, Coinquilino, DJ, Quello che non parla inglese, Barista, Professore imbucato'],
+  ['🎤', 'Karaoke del venerdì', 'Presentatore, Cantante stonato, Barista, Festeggiata, Ex che canta per vendetta, Tecnico audio'],
+  ['🧳', 'Gita di quinta', 'Professore accompagnatore, Studente, Autista del pullman, Receptionist, Quello che sta male, Coppietta della classe'],
+  ['🎰', 'Sala slot di paese', 'Pensionato, Gestore, Barista, Fortunato, Disperato, Moglie che lo cerca'],
+  ['🏖️', 'Lido a Ferragosto', 'Bagnino, Venditore ambulante, Famiglia con la parmigiana, DJ del lido, Animatore, Turista scottato'],
+  ['🍷', 'Matrimonio del cugino', 'Sposa, Sposo, Zio ubriaco, Nonna, Fotografo, Cameriere, Ex della sposa'],
+];
+
+export const SPICY_LOCATIONS: LocationItem[] = RAW_SPICY.map(([icon, name, roles]) => ({
+  id: 'x-' + slug(name),
+  name,
+  category: 'Notte brava',
+  icon,
+  roles: roles.split(', '),
+}));

@@ -1,0 +1,8 @@
+{
+  "name": "Spyfall Online - Il Gioco della Spia",
+  "description": "Gioca online a Il Gioco della Spia (Spyfall) con i tuoi amici in tempo reale. Trova l'infiltrato o inganna tutti se sei la Spia!",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

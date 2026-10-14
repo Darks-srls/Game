@@ -11,7 +11,11 @@ export const SPAG = {
   ownSafe: 3, // il mio ultimo metro e mezzo (3 pezzi) non mi fa niente
   fresh: 250, // e la punta appena fatta degli altri neanche (ms): passare davanti a una testa non è toccare lo spaghetto
   speed: 0.75,
+  safeStart: 1500, // lo spaghetto fatto nei primi 1,5 s non fa niente (ci si sistema)
+  rampT: 2.5, // all'inizio si parte piano e si accelera in 2,5 s (c'è tempo per girarsi)
 };
+// moltiplicatore di velocità all'inizio (uguale per me e per i bot)
+export const spagRamp = (t: number) => 0.55 + 0.45 * Math.min(1, Math.max(0, t) / SPAG.rampT);
 // quanto dura lo spaghetto: in tanti un po' meno (se no l'arena si riempie subito)
 export const spagLife = (n: number) => (n <= 3 ? SPAG.life : n <= 5 ? 10_500 : 9_000);
 // tocchi i grissini del bordo?

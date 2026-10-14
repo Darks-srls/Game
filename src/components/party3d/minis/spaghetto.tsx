@@ -1,7 +1,7 @@
 // 🍝 Spaghetto (telefono): tovaglia a quadri chiusa dai grissini, le scie di spaghetti colorati (un InstancedMesh
 // di pezzetti, leggero), la minimappa dall'alto e l'avviso "SALTA!" quando hai uno spaghetto davanti
 import * as THREE from 'three';
-import { SPAG, decodeTrail } from '../../../data/minis/spaghetto';
+import { SPAG, decodeTrail, spagRamp } from '../../../data/minis/spaghetto';
 import { soundManager } from '../../../utils/audio';
 import { Badge, stroke } from '../icons';
 import { balloon, burst, canvasTex, matte, outlined, popText, shadowy, toy } from '../scene';
@@ -106,6 +106,7 @@ registerClientMini({
   orbit: { c: [0, 0, 0], r: 34 },
   highCam: true,
   faceSpawn: true,
+  speed: (f) => spagRamp(f.playT), // partenza lenta, uguale a quella dei bot
   icon: (size) => (
     <Badge size={size} from="#ffe08a" to="#e76f51">
       <path d="M18 74 C 30 40, 46 86, 56 54 S 76 30, 84 50" fill="none" stroke="#1d0f3d" strokeWidth={13} strokeLinecap="round" />

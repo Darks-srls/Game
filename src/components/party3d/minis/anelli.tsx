@@ -181,18 +181,20 @@ registerClientMini({
       g.add(shadowy(o));
       pads.push(o);
     });
-    // festoni di lucine e bandierine tra i pali
+    // festoni di lucine e bandierine tra i pali (lontani dal prato: la telecamera non ci finisce dietro)
+    const POLE_R = ANELLI.r + 13;
     const poleM = toy('#8338ec');
     const bulbs: THREE.Mesh[] = [];
     const bulbM = [glow('#fff3b0', 1.2), glow('#ff70a6', 1.2), glow('#70d6ff', 1.2)];
     for (let k = 0; k < 6; k++) {
       const a = (k / 6) * Math.PI * 2;
       const pole = outlined(new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 10, 10), poleM), 1.05);
-      pole.position.set(Math.sin(a) * (ANELLI.r + 1.2), 5, Math.cos(a) * (ANELLI.r + 1.2));
+      pole.position.set(Math.sin(a) * POLE_R, 5, Math.cos(a) * POLE_R);
       g.add(shadowy(pole));
+      world.camBlockers.push(pole);
       const b = (((k + 1) % 6) / 6) * Math.PI * 2;
-      const from = new THREE.Vector3(Math.sin(a) * (ANELLI.r + 1.2), 9.6, Math.cos(a) * (ANELLI.r + 1.2));
-      const to = new THREE.Vector3(Math.sin(b) * (ANELLI.r + 1.2), 9.6, Math.cos(b) * (ANELLI.r + 1.2));
+      const from = new THREE.Vector3(Math.sin(a) * POLE_R, 9.6, Math.cos(a) * POLE_R);
+      const to = new THREE.Vector3(Math.sin(b) * POLE_R, 9.6, Math.cos(b) * POLE_R);
       g.add(flagLine(from, to, 12));
       for (let i = 1; i < 9; i++) {
         const p = from.clone().lerp(to, i / 9);
@@ -239,7 +241,7 @@ registerClientMini({
     for (let i = 0; i < 10; i++) {
       const b = balloon(['#ffd60a', '#ff4d6d', '#06d6a0', '#3a86ff', '#ff70a6'][i % 5]);
       const a = (i / 10) * Math.PI * 2 + 0.2;
-      b.position.set(Math.sin(a) * (ANELLI.r + 3.5), 7 + (i % 3) * 2, Math.cos(a) * (ANELLI.r + 3.5));
+      b.position.set(Math.sin(a) * (ANELLI.r + 11), 9 + (i % 3) * 2.5, Math.cos(a) * (ANELLI.r + 11));
       b.userData.y0 = b.position.y;
       balloons.push(b);
       g.add(b);

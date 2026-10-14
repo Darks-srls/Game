@@ -510,10 +510,10 @@ registerClientMini({
     });
     const steam: THREE.Sprite[] = [];
     for (let i = 0; i < 14; i++) {
-      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: steamTex, transparent: true, depthWrite: false, opacity: 0.5 }));
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: steamTex, transparent: true, depthWrite: false, opacity: 0.2 }));
       sp.userData.t0 = -R() * 4;
       sp.userData.a = R() * Math.PI * 2;
-      sp.userData.r = 9 + R() * 14;
+      sp.userData.r = 30 + R() * 22; // (lontano dalla torre: vicino alla telecamera coprirebbe tutto)
       steam.push(sp);
       g.add(sp);
     }
@@ -596,8 +596,8 @@ registerClientMini({
       for (const sp of steam) {
         const k = ((f.t - sp.userData.t0) % 4) / 4;
         sp.position.set(Math.sin(sp.userData.a + k) * sp.userData.r, lvl + k * 7, Math.cos(sp.userData.a + k) * sp.userData.r);
-        sp.scale.setScalar(2 + k * 5);
-        (sp.material as THREE.SpriteMaterial).opacity = Math.sin(k * Math.PI) * 0.45;
+        sp.scale.setScalar(1.5 + k * 2.5);
+        (sp.material as THREE.SpriteMaterial).opacity = Math.sin(k * Math.PI) * 0.25;
       }
       for (const b of balloons) b.position.y = b.userData.y0 + Math.sin(f.t * 0.8 + b.userData.phase) * 0.7;
       lights.forEach((b, i) => b.scale.setScalar(Math.sin(f.t * 6 + i * 0.8) > 0 ? 1.25 : 0.8));

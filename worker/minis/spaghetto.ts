@@ -1,5 +1,5 @@
 // 🍝 Spaghetto (server): le scie di ognuno, chi le tocca, i grissini del bordo, i bot che guardano avanti
-import { SPAG, encodeTrail, spagLife, spagWall } from '../../src/data/minis/spaghetto';
+import { SPAG, encodeTrail, spagLife, spagRamp, spagWall } from '../../src/data/minis/spaghetto';
 import { registerServerMini, type MiniApi, type MiniBot } from './types';
 
 interface Trail {
@@ -236,10 +236,11 @@ registerServerMini<SpagState>({
     return { ids, life: spagLife(ids.length), fresh: [], sentAt: 0 };
   },
   spawn: (_api, _id, i, n) => {
-    // in cerchio, girati verso fuori e tutti un po' nello stesso verso (a spirale: le strade non si incrociano)
+    // stretti in mezzo, girati a spirale verso fuori: le strade non si incrociano mai e il primo muro è a più di 3 s
+    // (con la partenza lenta); da fuori verso il centro le strade si incrocerebbero subito
     const a = (i / n) * Math.PI * 2;
-    const R = 7.5;
-    return { x: Math.sin(a) * R, y: 0, z: Math.cos(a) * R, r: a + Math.PI / 4 };
+    const R = Math.max(2.6, (1.4 * n) / (Math.PI * 2));
+    return { x: Math.sin(a) * R, y: 0, z: Math.cos(a) * R, r: a + 1.0 };
   },
   tick(api) {
     const E = api.ext;
@@ -304,7 +305,9 @@ registerServerMini<SpagState>({
         // (il mio ultimo metro e mezzo non conta; degli altri non conta la punta appena fatta: la testa che passa)
         let end = k === me ? T.xs.length - SPAG.ownSafe : T.xs.length;
         if (k !== me) while (end > T.from && now - T.ts[end - 1] < SPAG.fresh) end--;
+        const start = now - api.t * 1000 + SPAG.safeStart; // (quello dei primi secondi non conta)
         for (let i = T.from; i < end; i++) {
+          if (T.ts[i] < start) continue;
           const x = T.xs[i];
           const z = T.zs[i];
           if (Math.abs(x - p.x) > 3 || Math.abs(z - p.z) > 3) continue;
@@ -330,7 +333,7 @@ registerServerMini<SpagState>({
   },
   bot: botBrain,
   // (con autoRun i bot correrebbero anche durante l'introduzione: fermi finché non si gioca)
-  speed: (api) => (api.stage === 'PLAY' ? 1 : 0),
+  speed: (api) => (api.stage === 'PLAY' ? spagRamp(api.t) : 0),
   view: (api) => ({
     ids: api.ext.ids,
     life: api.ext.life,

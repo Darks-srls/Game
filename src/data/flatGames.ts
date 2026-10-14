@@ -330,7 +330,7 @@ export const FLAT_GAMES: FlatInfo[] = [
     spicy: true,
     options: [ROUNDS('round', [5, 7, 10], 7)],
     rules: [
-      'Esce una domanda con un numero (“quanti gradini ha la Torre Eiffel?”). Ognuno scrive la sua stima.',
+      'Esce una domanda con un numero (“a quanti gradi Fahrenheit bolle l’acqua?”). Ognuno scrive la sua stima.',
       'Poi le stime si mettono in fila e ognuno scommette le sue fiches su quella che pensa sia la più vicina senza superare la verità.',
       'Le risposte agli estremi pagano di più. Vince chi ha più fiches alla fine.',
     ],

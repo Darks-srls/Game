@@ -17,5 +17,7 @@ import './microsfide';
 import './emoji';
 import './ghigliottina';
 import './cinque';
+import './quizzone';
+import './stima';
 
 export { FLAT_MODES } from './registry';

@@ -22,4 +22,6 @@ export const FLAT_VIEWS: Partial<Record<GameId, ComponentType<ModeProps>>> = {
   EMOJI: lazy(() => import('./EmojiView')),
   GHIGLIOTTINA: lazy(() => import('./GhigliottinaView')),
   CINQUE: lazy(() => import('./CinqueView')),
+  QUIZZONE: lazy(() => import('./QuizzoneView')),
+  STIMA: lazy(() => import('./StimaView')),
 };

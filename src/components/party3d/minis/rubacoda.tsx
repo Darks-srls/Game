@@ -395,6 +395,7 @@ registerClientMini({
       const z = Math.cos(a) * (R + 1.1);
       const pole = new THREE.Mesh(poleG, poleM);
       pole.position.set(x, 2.5, z);
+      world.camBlockers.push(pole);
       const bulb = new THREE.Mesh(bulbG, glow('#ffcf6b', 2.6));
       bulb.position.set(x, 5.1, z);
       lanterns.push(bulb);
@@ -418,6 +419,7 @@ registerClientMini({
       m.position.set(o.x, 0, o.z);
       m.rotation.y = o.x * 0.7 + o.z;
       g.add(m);
+      if (o.k === 'botte') world.camBlockers.push(m);
     }
     // la salumeria in fondo, con la tenda a righe e l'insegna
     const shop = new THREE.Group();
@@ -477,6 +479,7 @@ registerClientMini({
       rack.position.set(sx * (R + 6), -0.6, 5);
       rack.rotation.y = sx * 1.2;
       g.add(shadowy(rack));
+      world.camBlockers.push(rack);
     }
     // insegna gigante: una fetta di salame che gira su un palo
     const slice = new THREE.Group();
@@ -487,6 +490,7 @@ registerClientMini({
     const sPole = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 8, 10), toy('#d9dde3', { metalness: 0.6 }));
     sPole.position.set(R + 9, 3.4, -8);
     g.add(shadowy(slice), sPole);
+    world.camBlockers.push(sPole, shop);
     // maialini che trotterellano intorno allo steccato
     const pigs: THREE.Group[] = [];
     for (let i = 0; i < 3; i++) {

@@ -423,6 +423,7 @@ registerClientMini({
     }
     basil.position.set(-H - 4.5, -0.6, 15);
     g.add(shadowy(tomato), shadowy(garlic), shadowy(pin), shadowy(flour), shadowy(basil));
+    world.camBlockers.push(stove, tomato, garlic, pin, flour, basil);
 
     // ---- le talpe (si riusano)
     const mats = {

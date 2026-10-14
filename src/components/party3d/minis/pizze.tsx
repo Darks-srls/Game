@@ -329,6 +329,7 @@ registerClientMini({
     chimney.position.set(0.4, 3.5, -0.4);
     oven.add(base, dome, mouthG, chimney);
     g.add(shadowy(oven));
+    world.camBlockers.push(base, dome, chimney);
     const smoke: { m: THREE.Mesh; ph: number }[] = [];
     const smokeM = new THREE.MeshStandardMaterial({ color: '#e9e3dc', transparent: true, opacity: 0.6, roughness: 1, depthWrite: false });
     const smokeG = new THREE.IcosahedronGeometry(0.55, 1);
@@ -400,6 +401,7 @@ registerClientMini({
       g.add(shadowy(tg));
       beam.castShadow = arrow.castShadow = ring.castShadow = false;
       beams.push({ m: beam, mat: beamMat, ring: ringMat, arrow, sign });
+      world.camBlockers.push(sign);
     });
     // i vasi di limoni (ostacoli)
     const trees: THREE.Group[] = [];
@@ -408,6 +410,7 @@ registerClientMini({
       tr.position.set(p.x, 0, p.z);
       trees.push(tr);
       g.add(tr);
+      world.camBlockers.push(tr);
     }
     // fuori: la facciata con l'insegna al neon, lavagna del menù, botti, la Vespa, palloncini, pizza gigante che gira
     const facade = new THREE.Mesh(rbox(26, 10, 2, 0.2), toy('#ffffff', { map: brickTex([6, 3]), roughness: 0.8, clearcoat: 0 }));
@@ -419,6 +422,7 @@ registerClientMini({
     awn.position.set(0, 4.2, -H - 2.6);
     awn.rotation.x = 0.35;
     g.add(shadowy(facade), neon, awn);
+    world.camBlockers.push(facade);
     const menu = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 3), new THREE.MeshStandardMaterial({ map: menuTex(), roughness: 0.8 }));
     menu.position.set(H + 3.5, 1.1, -6);
     menu.rotation.y = -Math.PI / 2 + 0.3;
@@ -432,6 +436,7 @@ registerClientMini({
       const b = outlined(new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 1.6, 18), barrelM), 1.03);
       b.position.set(x, 0.2, z);
       g.add(shadowy(b));
+      world.camBlockers.push(b);
     }
     const vespa = new THREE.Group();
     const vBody = outlined(new THREE.Mesh(new THREE.CapsuleGeometry(0.55, 1.4, 6, 12).rotateX(Math.PI / 2), toy('#7fd1ae')), 1.04);
@@ -452,6 +457,7 @@ registerClientMini({
     vespa.position.set(-H - 4, -0.6, 7);
     vespa.rotation.y = 0.6;
     g.add(shadowy(vespa));
+    world.camBlockers.push(vespa);
     const bigPizza = makePizza(false);
     bigPizza.scale.setScalar(4.2);
     bigPizza.rotation.x = Math.PI / 2;
@@ -461,6 +467,7 @@ registerClientMini({
     bpHolder.position.set(H + 7, 8.5, 9);
     bpHolder.add(bigPizza);
     g.add(bpPole, bpHolder);
+    world.camBlockers.push(bpPole, bpHolder);
     const balloons: THREE.Group[] = [];
     for (let k = 0; k < 6; k++) {
       const b = balloon(PIZ_TABLES[k].color);
@@ -494,6 +501,7 @@ registerClientMini({
         const post = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 3.6, 8), postM);
         post.position.set(sx * (H + 0.35), 1.8, sz * (H + 0.35));
         g.add(post);
+        world.camBlockers.push(post);
       }
 
     // ---- le pizze (sul bancone e per terra; quelle in mano le disegna decorate)

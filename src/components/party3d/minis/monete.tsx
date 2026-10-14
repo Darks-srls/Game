@@ -249,6 +249,7 @@ registerClientMini({
         const ball = new THREE.Mesh(new THREE.SphereGeometry(0.42, 16, 12), ballM);
         ball.position.set(sx * (H + 0.3), 2.2, sz * (H + 0.3));
         g.add(shadowy(col), ball);
+        world.camBlockers.push(col);
       }
     // la fontana: vasca, acqua che si muove, colonnina con la monetona d'oro che gira e gli zampilli
     const fr = MON.fountainR;
@@ -268,6 +269,7 @@ registerClientMini({
     bigCoin.rotation.x = Math.PI / 2;
     bigCoin.position.y = 3.15;
     g.add(shadowy(basin), rim, water, shadowy(column), shadowy(bigCoin));
+    world.camBlockers.push(basin, column, bigCoin);
     const drops: THREE.Mesh[] = [];
     const dropG = new THREE.SphereGeometry(0.09, 6, 5);
     const dropM = toy('#bfe9ff', { transparent: true, opacity: 0.85, roughness: 0.1 });
@@ -295,6 +297,7 @@ registerClientMini({
       m.position.set(x, h / 2 - 0.6, z);
       m.rotation.y = r;
       g.add(shadowy(m, true, false));
+      world.camBlockers.push(m);
     }
     const clothes: THREE.Mesh[] = [];
     const clothG = new THREE.PlaneGeometry(0.9, 1.2).translate(0, -0.6, 0); // appesi per il bordo di sopra
@@ -359,6 +362,7 @@ registerClientMini({
       bank.add(p);
     }
     bank.position.set(0, 0, H + 9);
+    world.camBlockers.push(front, door);
     g.add(shadowy(bank));
     // lampioni ai lati
     const lampM = toy('#2b2d42', { metalness: 0.4 });
@@ -375,6 +379,7 @@ registerClientMini({
       bulb.position.set(x, 5.1, z);
       lamps.push(bulb);
       g.add(shadowy(pole), bulb);
+      world.camBlockers.push(pole);
     }
     // i piccioni che girano in tondo
     const pigeons: THREE.Group[] = [];

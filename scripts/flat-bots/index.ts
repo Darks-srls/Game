@@ -14,5 +14,8 @@ import './codici';
 import './scala10';
 import './gregge';
 import './microsfide';
+import './emoji';
+import './ghigliottina';
+import './cinque';
 
 export { FLAT_BOTS } from './types';

@@ -172,6 +172,7 @@ export const FLAT_GAMES: FlatInfo[] = [
     emoji: '📖',
     cat: 'bluff',
     min: 3,
+    spicy: true,
     options: [ROUNDS('round', [5, 8, 10], 8)],
     rules: [
       'Esce una parola italiana vera ma rarissima. Ognuno scrive una definizione inventata, credibile.',
@@ -265,6 +266,7 @@ export const FLAT_GAMES: FlatInfo[] = [
     emoji: '📝',
     cat: 'quiz',
     min: 2,
+    spicy: true,
     options: [
       ROUNDS('round', [3, 5, 8], 5),
       { key: 'secondi', label: '⏱️ Secondi per scrivere', values: [[60, '60'], [90, '90'], [120, '120']], def: 90 },
@@ -283,6 +285,7 @@ export const FLAT_GAMES: FlatInfo[] = [
     emoji: '❓',
     cat: 'quiz',
     min: 2,
+    spicy: true,
     options: [ROUNDS('domande', [10, 15, 20], 15, '❓ Quante domande')],
     rules: [
       'Domande di cultura generale, cinema, sport, cibo, Italia… quattro risposte, una giusta.',
@@ -296,9 +299,10 @@ export const FLAT_GAMES: FlatInfo[] = [
     emoji: '🎬',
     cat: 'quiz',
     min: 2,
+    spicy: true,
     options: [ROUNDS('round', [10, 15, 20], 15)],
     rules: [
-      'Compare una fila di emoji: è un film, una canzone, un proverbio o un personaggio.',
+      'Compare una fila di emoji: è un film, una canzone, un proverbio, un personaggio, una serie TV o un cartone.',
       'Scrivete la risposta: più siete veloci più punti prendete. Dopo un po’ arrivano gli aiutini.',
     ],
   },
@@ -309,6 +313,7 @@ export const FLAT_GAMES: FlatInfo[] = [
     emoji: '🪓',
     cat: 'quiz',
     min: 2,
+    spicy: true,
     options: [ROUNDS('round', [5, 8, 10], 8)],
     rules: [
       'Escono cinque parole, una alla volta: c’è una sola parola che le collega tutte (es. OCCHIALI, COLPO, GIRA, TRAMONTO, CREMA → SOLE).',
@@ -322,6 +327,7 @@ export const FLAT_GAMES: FlatInfo[] = [
     emoji: '🎯',
     cat: 'quiz',
     min: 3,
+    spicy: true,
     options: [ROUNDS('round', [5, 7, 10], 7)],
     rules: [
       'Esce una domanda con un numero (“quanti gradini ha la Torre Eiffel?”). Ognuno scrive la sua stima.',
@@ -336,6 +342,7 @@ export const FLAT_GAMES: FlatInfo[] = [
     emoji: '🟩',
     cat: 'quiz',
     min: 1,
+    spicy: true,
     options: [ROUNDS('round', [3, 5, 7], 5)],
     rules: [
       'Tutti cercano la stessa parola di 5 lettere, con 6 tentativi.',

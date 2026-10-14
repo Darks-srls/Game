@@ -1519,7 +1519,7 @@ function playTick(s: PState, ctx: Ctx, dt: number): boolean {
     if (p && p.y < fallY && s.kind !== 'POLPETTE' && s.kind !== 'CORSA' && extOf(s)?.falls !== 'none') eliminate(s, ctx, id, why);
   }
   // velocità stimata dei giocatori veri (serve alla palla e alla mira dei bot)
-  if (s.kind === 'CALCIO' || s.kind === 'POMODORI')
+  if (s.kind === 'CALCIO' || s.kind === 'POMODORI' || extOf(s))
     for (const id of s.humans) {
       const p = pos(s, ctx, id);
       if (!p) continue;

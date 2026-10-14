@@ -1393,7 +1393,11 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
       if (dataRef.current.stage === 'PLAY') tryLock();
       const sn = dataRef.current.snipers.includes(myId);
       const kd0 = dataRef.current.kind;
-      if (e.button === 0 && sn) actions.current.fire();
+      // minigiochi a moduli col loro pulsante (lancia, prendi…): il clic sinistro fa quello
+      const mb = e.button === 0 && !sn ? actions.current.miniButton() : null;
+      if (mb) {
+        if (!mb.disabled) mb.press();
+      } else if (e.button === 0 && sn) actions.current.fire();
       else if (e.button === 0 && kd0 === 'DENTE') actions.current.stop();
       else if (e.button === 0 && kd0 === 'POMODORI') actions.current.throwT();
       else if (e.button === 0 && kd0 === 'CALCIO') actions.current.push();

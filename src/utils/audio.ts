@@ -1,6 +1,6 @@
 // Effetti sonori sintetizzati al volo con la Web Audio API: zero file da scaricare.
 // Regola d'oro per giocare dal vivo: nessun suono (né vibrazione) cambia in base al ruolo segreto.
-type ToneOptions = { type?: OscillatorType; vol?: number; attack?: number; slideTo?: number };
+export type ToneOptions = { type?: OscillatorType; vol?: number; attack?: number; slideTo?: number };
 type NoiseOptions = { vol?: number; filter?: BiquadFilterType; freq?: number; freqTo?: number; q?: number };
 
 class SoundController {
@@ -64,6 +64,12 @@ class SoundController {
     }
     if (this.ctx.state === 'suspended') this.ctx.resume();
     return true;
+  }
+
+  // una nota libera, anche in ritardo di qualche istante (minigiochi: le note di Simon dice, i fischi…); rispetta volume e muto
+  playNote(freq: number, dur = 0.4, opts: ToneOptions = {}, start = 0) {
+    if (!this.ready()) return;
+    this.tone(freq, start, dur, opts);
   }
 
   private tone(freq: number, start: number, dur: number, { type = 'sine', vol = 0.15, attack = 0.01, slideTo }: ToneOptions = {}) {

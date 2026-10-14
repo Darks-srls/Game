@@ -4,7 +4,7 @@ Giochi di gruppo da fare in videochiamata o dal vivo: ognuno usa il proprio tele
 Nella home si sceglie il gioco e si crea la stanza. Le stanze aperte compaiono in diretta nella home
 e gli amici entrano con un tocco; chi crea la stanza può renderla privata (si entra col link o il codice).
 
-- **Axend Party** (videogioco 3D, Three.js) — 7 minigiochi a punti con podio finale: Spingi giù, Luce rossa luce verde, Sedie musicali, Cecchini (in prima persona), Polpette rotolanti, Il mestolo della nonna, La gallina d'oro. Bot che giocano da soli, telecamera da trascinare, impostazioni (volume, sensibilità, grafica), funziona anche in orizzontale.
+- **Axend Party** (videogioco 3D, Three.js) — 35 minigiochi a punti con podio finale. I classici: Spingi giù, Luce rossa luce verde, Sedie musicali, Cecchini (in prima persona), Polpette rotolanti, Il mestolo della nonna, La gallina d'oro, Il ponte di lasagne, Il petardo, Pasta al dente, Pavimento di wafer, Macedonia, Calcetto gigante, Pomodorata, Corsa pazza. I nuovi (a moduli): Il re della pizza, Ruba la coda, Pioggia di monete, Schiaccia le talpe, Pizza express, Autoscontro, Pennellate, Trasformisti (nascondino travestiti), Simon dice, Caccia alle uova, Rubabandiera, Palla avvelenata, Beach volley, Il mattarello, La bilancia, Il muro di lasagna, Salta la corda, Sale il sugo, Anelli di cipolla, Spaghetto. La scaletta propone prima i minigiochi che non fate da più tempo. Bot che giocano da soli, telecamera da trascinare, impostazioni (volume, sensibilità, grafica), funziona anche in orizzontale.
 - **Astro Impostori** (videogioco in tempo reale) — astronauti su un'astronave: l'equipaggio fa i compiti, l'impostore elimina, usa le botole e sabota (porte, luci, comunicazioni, reattore, ossigeno); corpi, riunioni e voto. Joystick sul telefono, WASD/frecce sul PC.
 - **La Spia** — tutti conoscono il luogo tranne la spia; domande e voti a voce, poi tutti premono Conferma.
 - **L'Impostore** — tutti hanno la stessa parola, l'impostore una simile (o nessuna); indizi e voti a voce.
@@ -17,6 +17,14 @@ e gli amici entrano con un tocco; chi crea la stanza può renderla privata (si e
 - **Sintonia** — il sensitivo vede un bersaglio sul quadrante e dà un indizio; gli altri girano la lancetta.
 - **Parola proibita** — a squadre: fai indovinare la parola senza dire le cinque vietate (gli avversari hanno il BUZZ).
 - **Chi sono?** — tutti vedono il tuo personaggio tranne te: domande sì/no a voce finché non lo scopri.
+
+Giochi flat nuovi (a moduli, regole complete nel libretto dell'app):
+- Ruoli segreti: **Lupi mannari**, **Missione segreta**, **L'infiltrato**
+- Bluff: **Rose e teschi**, **Bestie bugiarde**, **Intrigo di corte**, **Lettere a corte**, **Il dizionario**
+- A voce e in squadra: **Nomi in codice**, **Una parola sola**, **Da 1 a 10**
+- Risate: **Il gregge**, **Mente unica**
+- Quiz e parole: **Nomi, cose, città**, **Quizzone**, **Emoji quiz**, **La ghigliottina**, **Più o meno**, **Cinque lettere**
+- Riflessi: **Microsfide** (26 sfide lampo da 5 secondi)
 
 Il foglio da disegno ha 16 colori, matita, secchiello, linea, rettangolo, cerchio, gomma, spessori, annulla e cancella.
 
@@ -47,5 +55,7 @@ Dopo aver creato le immagini: `npm run deploy`. Finché non ci sono, l'app usa l
 - `worker/modes.ts`, `worker/party.ts` — regole dei giochi "a moduli" (disegno e bomba; giochi di gruppo)
 - `worker/party3d.ts` + `src/data/party3d.ts` + `src/components/PartyView.tsx` + `src/components/party3d/` — Axend Party: regole e bot sul server (giro da 66 ms), fisica condivisa, grafica 3D, icone e sticker; posizioni con P3_MOVE / P3_POS
 - `worker/astro.ts` + `src/data/astro.ts` — Astro Impostori: regole e mappa; le posizioni viaggiano a parte (RT_MOVE / RT_POS, 10 al secondo)
-- `scripts/` — generatori della grafica con Gemini
+- `worker/minis/` + `src/data/minis/` + `src/components/party3d/minis/` — i minigiochi di Axend Party "a moduli" (uno per file; guida in `docs/minigiochi-3d.md`)
+- `worker/flat/` + `src/data/flat/` + `src/components/flat/` + `src/data/flatGames.ts` — i giochi flat "a moduli" (guida in `docs/giochi-flat.md`)
+- `scripts/` — generatori della grafica con Gemini e banchi di prova: `npx tsx scripts/prova-party.ts tutti`, `npx tsx scripts/prova-flat.ts tutti`, `npx tsx scripts/finti.ts <stanza> <quanti>` (giocatori finti nella stanza locale)
 - `_backup_versione_ai_studio/` — file della versione originale di AI Studio (non più usati)

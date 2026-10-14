@@ -21,9 +21,56 @@ export const DRAW_WORDS = [
   'monopattino', 'skateboard', 'sci', 'canoa', 'pizza con l’ananas', 'gatto che dorme', 'cane con gli occhiali',
   'mucca sulla luna', 'nonna in moto', 'pinguino in vacanza', 'robot innamorato', 'banana arrabbiata',
   'mongolfiera', 'paracadute', 'lanterna', 'scopa', 'martello', 'cacciavite', 'chiodo', 'calamita', 'bussola', 'binocolo', 'telescopio', 'microscopio', 'siringa', 'cerotto', 'termometro', 'ventilatore', 'tostapane', 'frullatore', 'pentola', 'padella', 'forchetta', 'cucchiaio', 'tazza', 'bottiglia', 'lattina', 'ciambella', 'cornetto', 'spaghetti', 'sushi', 'patatine fritte', 'popcorn', 'hot dog', 'pancake', 'lecca lecca', 'caramella', 'noce di cocco', 'pera', 'avocado', 'peperoncino', 'melanzana', 'broccolo', 'cipolla', 'pannocchia', 'medusa', 'stella marina', 'cavalluccio marino', 'ippopotamo', 'rinoceronte', 'cammello', 'koala', 'riccio', 'scoiattolo', 'volpe', 'pipistrello', 'struzzo', 'fenicottero', 'aquila', 'cigno', 'papera', 'bruco', 'coccinella', 'scorpione', 'aragosta', 'trono', 'mulino a vento', 'grattacielo', 'semaforo', 'cassetta della posta', 'panchina', 'fontana', 'pozzo', 'scala', 'racchetta', 'canestro', 'trofeo', 'medaglia', 'fischietto', 'dado', 'joystick', 'cubo di Rubik', 'yo-yo', 'scivolo', 'gatto astronauta', 'pizza che balla', 'squalo in bici', 'nonno skater', 'mucca in discoteca', 'dinosauro che fa yoga', 'fantasma timido', 'cane chef', 'polpo batterista', 'tartaruga che corre', 'gallina con gli occhiali da sole', 'elefante in ascensore', 'unicorno pigro', 'robot che piange', 'zombie a dieta', 'vampiro dal dentista', 'alieno al supermercato', 'pagliaccio triste', 'pesce fuor d’acqua', 'professore che dorme', 'selfie con la giraffa',
+  // Vestiti e oggetti di casa
+  'cravatta', 'guanto', 'calzino', 'sciarpa', 'berretto', 'stivale', 'ciabatta', 'borsa', 'portafoglio', 'anello',
+  'collana', 'orecchino', 'rossetto', 'profumo', 'spazzola', 'phon', 'rasoio', 'asciugamano', 'vasca da bagno', 'water',
+  'rubinetto', 'lavandino', 'cuscino', 'coperta', 'armadio', 'cassetto', 'scrivania', 'quadro', 'tappeto', 'appendiabiti',
+  'sveglia', 'calendario', 'busta', 'francobollo', 'pacco', 'scatola', 'cestino', 'secchio', 'aspirapolvere', 'ferro da stiro',
+  'molletta', 'stendino', 'bottone', 'cerniera', 'ago e filo', 'graffetta', 'righello', 'gomma', 'temperino', 'pennello',
+  'tavolozza', 'colla', 'nastro adesivo', 'lucchetto', 'catena', 'corda', 'salvadanaio', 'moneta', 'banconota', 'carrello della spesa',
+  // Città e attrezzi
+  'lampione', 'idrante', 'cartello stradale', 'strisce pedonali', 'distributore di benzina', 'bancomat', 'carriola', 'pala',
+  'rastrello', 'annaffiatoio', 'vaso', 'tagliaerba', 'sega', 'trapano', 'chiave inglese', 'pinza', 'cassetta degli attrezzi',
+  'chiesa', 'campanile', 'ospedale', 'scuola', 'stazione', 'stadio', 'tendone del circo', 'giostra', 'palcoscenico', 'sipario',
+  // Mare, sport e giochi
+  'sacco a pelo', 'falò', 'zattera', 'barca a vela', 'remo', 'salvagente', 'pinne', 'maschera da sub', 'ombrellone', 'sdraio',
+  'secchiello', 'castello di sabbia', 'conchiglia', 'onda', 'tavola da surf', 'frisbee', 'boomerang', 'trottola', 'birillo',
+  'palla da bowling', 'mazza da baseball', 'guantoni da boxe', 'pesi', 'casco', 'pattini', 'slitta', 'porta da calcio', 'rete da pesca',
+  // Cibo
+  'bistecca', 'salsiccia', 'coscia di pollo', 'uovo fritto', 'toast', 'baguette', 'biscotto', 'muffin', 'cupcake', 'crostata',
+  'cannolo', 'arancino', 'piadina', 'lasagna', 'polpette', 'ghiacciolo', 'frappè', 'cappuccino', 'moka', 'teiera', 'bicchiere',
+  'cannuccia', 'mestolo', 'grattugia', 'mattarello', 'cavatappi', 'ketchup', 'patata', 'zucchina', 'aglio', 'cavolfiore',
+  'insalata', 'peperone', 'kiwi', 'mango', 'pesca', 'mirtillo', 'castagna', 'noce', 'oliva', 'melone', 'pizza margherita',
+  // Animali
+  'lupo', 'cervo', 'alce', 'castoro', 'lontra', 'foca', 'tricheco', 'orca', 'pesce palla', 'pesce spada', 'lombrico',
+  'cavalletta', 'libellula', 'mosca', 'vespa', 'scarafaggio', 'pavone', 'tucano', 'colibrì', 'corvo', 'piccione',
+  'gabbiano', 'picchio', 'tacchino', 'oca', 'capra', 'asino', 'lama', 'bradipo', 'gorilla', 'ghepardo', 'lucertola',
+  'camaleonte', 'criceto', 'pesce rosso', 'bassotto', 'dalmata', 'barboncino',
+  // Natura e spazio
+  'cascata', 'fiume', 'lago', 'deserto', 'oasi', 'palma', 'grotta', 'iceberg', 'pianeta', 'Saturno', 'cometa', 'meteorite',
+  'satellite', 'UFO', 'eclissi', 'goccia', 'fiocco di neve', 'girasole', 'rosa', 'tulipano', 'quadrifoglio', 'ragnatela', 'nido',
+  // Personaggi
+  'cavaliere', 'ninja', 'cowboy', 'samurai', 'vichingo', 'gladiatore', 'faraone', 'esploratore', 'detective', 'ladro',
+  'prigioniero', 'giudice', 'infermiera', 'contadino', 'pescatore', 'giardiniere', 'muratore', 'idraulico', 'postino',
+  'barbiere', 'pittore', 'fotografo', 'cantante', 'DJ', 'mimo', 'giocoliere', 'acrobata', 'fata', 'elfo', 'gnomo', 'orco',
+  'gigante', 'ciclope', 'yeti', 'lupo mannaro', 'Frankenstein', 'mostro di Loch Ness', 'Pinocchio', 'Cappuccetto Rosso',
+  'Superman', 'Batman', 'Spider-Man', 'Hulk', 'Super Mario', 'Pac-Man', 'Pikachu', 'Minion', 'SpongeBob', 'Shrek', 'Godzilla',
+  'King Kong',
+  // Feste
+  'uovo di Pasqua', 'presepe', 'calza della Befana', 'maschera di Carnevale', 'coriandoli', 'candeline', 'cappello da festa',
+  'pentolaccia', 'brindisi', 'bomboniera', 'sposi', 'laurea',
+  // Scenette buffe
+  'gatto sul termosifone', 'cane che scava una buca', 'piccione che ruba il panino', 'gabbiano che ruba il gelato',
+  'pinguino con la sciarpa', 'orso in letargo', 'serpente col cappello', 'giraffa con la sciarpa', 'polpo che fa il caffè',
+  'dinosauro sul tram', 'fantasma in spiaggia', 'drago che starnutisce', 'unicorno in palestra', 'zombie in pigiama',
+  'vampiro abbronzato', 'mummia sotto la doccia', 'scheletro al bar', 'sirena in piscina', 'astronauta al mare',
+  'robot che cucina', 'alieno in gondola', 'mago senza coniglio', 're in mutande', 'nonno sul monopattino',
+  'lumaca sul razzo', 'gatto nella scatola', 'cane in barca', 'pizza volante', 'banana che fa surf', 'tostapane arrabbiato',
+  'lampadina con un’idea', 'nuvola che piange', 'sole con gli occhiali', 'luna che dorme', 'vulcano che starnutisce',
+  'castello di carte', 'prof che rincorre il bus', 'nonna con lo smartphone', 'mucca al volante', 'pecora che conta gli umani',
 ];
 
-// 🌶️ Parole piccanti (stanze con i contenuti piccanti attivi)
+// 🌶️ Parole piccanti (stanze con i contenuti piccanti attivi): sporche, nere e blasfeme quanto basta
 export const DRAW_WORDS_SPICY = [
   'sbronza', 'doposbronza', 'kebab delle 4', 'mutande', 'reggiseno', 'scoreggia', 'rutto', 'pancia da birra',
   'calzini con i sandali', 'ex fidanzato', 'primo appuntamento', 'addio al celibato', 'buttafuori', 'tatuaggio',
@@ -32,4 +79,53 @@ export const DRAW_WORDS_SPICY = [
   'carta igienica finita', 'zanzara', 'sveglia alle 6', 'lunedì mattina', 'ultimo giro', 'shottino', 'spritz',
   'cuore spezzato', 'cena aziendale', 'russare', 'fila alle poste', 'notifica del capo',
   'succhiotto', 'Tinder', 'spogliarello', 'perizoma', 'mutande al contrario', 'bikini', 'sauna', 'fila al bagno della discoteca', 'vomito', 'sigaretta', 'narghilè', 'tequila', 'beer pong', 'serenata sotto il balcone', 'corna', 'spunte blu', 'crush', 'nudista', 'bagno di mezzanotte', 'coinquilino disordinato', 'chiamata dell’ex', 'tacchi rotti', 'trucco sciolto', 'risveglio dopo la festa', 'fuga dalla finestra',
+  // Letto e dintorni
+  'pisello', 'tette', 'culo', 'chiappe', 'capezzolo', 'preservativo', 'preservativo bucato', 'vibratore', 'manette',
+  'frusta', 'reggicalze', 'corsetto', 'tanga leopardato', 'bambola gonfiabile', 'sexy shop', 'pornostar', 'orgia',
+  'macchina appannata', 'letto che cigola', 'kamasutra', 'pecorina', 'sessantanove', 'pillola blu', 'erezione',
+  'test di gravidanza', 'cicogna in ritardo', 'spermatozoo', 'palo della lap dance', 'stripper', 'gigolò', 'cornuto',
+  'amante nell’armadio', 'marito che rientra prima', 'motel a ore', 'scambisti', 'sexting', 'nudo artistico',
+  'tette rifatte', 'labbra rifatte', 'botox', 'push-up', 'calendario sexy', 'pompiere sexy', 'idraulico sexy',
+  'quartiere a luci rosse', 'lubrificante', 'cintura di castità', 'reggiseno sul lampadario', 'fuga in mutande',
+  'sesso in tenda', 'mutande commestibili', 'calza a rete', 'sveltina in ascensore', 'telefonata erotica', 'pancione',
+  // Corpi, fluidi e schifezze
+  'diarrea', 'cacca', 'cacca fumante', 'pipì', 'pipì nella neve', 'pipì in piscina', 'scoreggia nella vasca', 'caccola',
+  'moccio', 'brufolo che esplode', 'forfora', 'pidocchi', 'piattole', 'emorroidi', 'supposta', 'clistere', 'pannolone',
+  'dentiera nel bicchiere', 'alito pesante', 'piedi puzzolenti', 'calzino che sta in piedi', 'ascelle pezzate',
+  'cerume', 'unghia incarnita', 'alluce valgo', 'verruca', 'herpes', 'water intasato', 'sturalavandini', 'bagno chimico',
+  'bagno alla turca', 'peli nella doccia', 'schiena pelosa', 'pelo nel naso', 'ceretta', 'cellulite', 'pancia da divano',
+  // Alcol e sostanze
+  'canna', 'bong', 'cocaina', 'banconota arrotolata', 'funghetti allucinogeni', 'pianta di marijuana', 'spacciatore',
+  'vino in cartone', 'damigiana', 'grappa del nonno', 'imbuto della birra', 'ubriaco al lampione', 'ubriaco abbracciato al water',
+  'coma etilico', 'alcoltest', 'palloncino dei carabinieri', 'flebo dopo la serata', 'occhi rossi', 'vomito sulle scarpe',
+  'rave in un campo', 'ciucco in monopattino',
+  // Morte e funerali
+  'bara', 'bara con le ruote', 'lapide', 'tomba', 'cimitero', 'becchino', 'carro funebre', 'corona di fiori', 'urna',
+  'cremazione', 'testamento', 'vedova allegra', 'funerale', 'morto che balla', 'la Morte con la falce', 'necrologio',
+  'obitorio', 'sagoma col gesso', 'ghigliottina', 'sedia elettrica', 'veleno', 'teschio', 'fantasma della nonna',
+  'seduta spiritica', 'tavola Ouija', 'esorcismo', 'testa che gira', 'morto al funerale che si alza', 'ceneri nel vaso sbagliato',
+  'Caronte in pedalò', 'mummia che si sfascia', 'scheletro in palestra',
+  // Ospedale e vecchiaia
+  'colonscopia', 'esplorazione rettale', 'guanto di lattice', 'camice aperto dietro', 'padella dell’ospedale',
+  'pappagallo dell’ospedale', 'gesso alla gamba', 'flebo', 'barella', 'defibrillatore', 'trapianto di capelli',
+  'riporto', 'nonno arrapato', 'nonna in bikini', 'badante', 'ospizio', 'tombola all’ospizio', 'rughe', 'umarell al cantiere',
+  'catetere', 'Viagra', 'pannolone in spiaggia', 'nonna su Tinder', 'dentiera che morde',
+  // Santi, preti e Bibbia
+  'Dio sulla nuvola', 'Gesù che cammina sulle acque', 'Gesù che fa surf', 'acqua che diventa vino', 'Madonna che piange',
+  'Madonna nel toast', 'aureola', 'santino', 'Padre Pio', 'stigmate', 'Papa in monopattino', 'papamobile', 'prete ubriaco',
+  'suora in moto', 'suora con lo skateboard', 'frate con la birra', 'confessionale', 'ostia', 'acqua santa', 'Ultima cena',
+  'Giuda con i soldi', 'Mosè che apre il mare', 'Arca di Noè', 'Adamo ed Eva', 'foglia di fico', 'serpente tentatore',
+  'diavolo', 'forcone', 'inferno', 'Satana in vacanza', 'angelo', 'arpa', 'San Pietro con le chiavi', 'paradiso',
+  'purgatorio', 'Re Magi ubriachi', 'stella cometa', 'bue e asinello', 'moltiplicazione dei pani', 'diluvio universale',
+  'Lazzaro che si alza', 'miracolo', 'statua che piange', 'pellegrino scalzo', 'campane a morto',
+  // VIP presi in giro
+  'Totti col Rolex', 'Ronaldo che fa Siuuu', 'Messi che piange', 'Al Bano col cappello', 'Vasco Rossi al bar',
+  'Berlusconi in paradiso', 'Briatore sullo yacht', 'Ferragni col pandoro', 'Fedez col microfono', 'Sgarbi che urla capra',
+  'Morandi che spala la neve', 'Maria De Filippi con la busta', 'Mourinho con le manette', 'Maradona con la mano',
+  'Elon Musk su Marte', 'regina Elisabetta coi corgi', 'Zuckerberg robot', 'Gianluca Vacchi che balla', 'Andreotti Belzebù',
+  'Malgioglio col ciuffo',
+  // Disastri da adulti
+  'suocera con la scopa', 'suocera in bikini', 'amante sul balcone', 'mutande sul lampadario', 'scoreggia in ascensore',
+  'piscina gialla', 'divorzio', 'avvocato divorzista', 'cane conteso', 'figlio del postino', 'tradimento', 'chat segreta',
+  'bustarella', 'evasore fiscale', 'Agenzia delle Entrate', 'cartella esattoriale',
 ];

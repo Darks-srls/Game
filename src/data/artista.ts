@@ -1,19 +1,32 @@
 // 🖌️ Artista impostore: categoria (la conosce anche l'impostore) e parole segrete
 export const ARTIST_WORDS: Record<string, string[]> = {
-  Animali: ['gatto', 'cane', 'giraffa', 'elefante', 'pinguino', 'serpente', 'polpo', 'farfalla', 'coccodrillo', 'canguro', 'tartaruga', 'gallina', 'squalo', 'scimmia', 'lumaca'],
-  Cibo: ['pizza', 'gelato', 'banana', 'hamburger', 'torta', 'spaghetti', 'anguria', 'uovo', 'panino', 'ciambella', 'fragola', 'popcorn', 'carota', 'formaggio', 'cornetto'],
-  Oggetti: ['ombrello', 'occhiali', 'chitarra', 'forbici', 'lampadina', 'orologio', 'telefono', 'chiave', 'candela', 'zaino', 'scopa', 'martello', 'valigia', 'spazzolino', 'sedia'],
-  Luoghi: ['spiaggia', 'castello', 'vulcano', 'isola', 'piscina', 'ospedale', 'scuola', 'circo', 'faro', 'igloo', 'piramide', 'stadio', 'cimitero', 'fattoria', 'luna park'],
-  Personaggi: ['pirata', 'sirena', 'fantasma', 'mago', 'astronauta', 'vampiro', 'robot', 're', 'strega', 'cowboy', 'ninja', 'zombie', 'clown', 'principessa', 'alieno'],
-  Mezzi: ['bicicletta', 'aereo', 'nave', 'razzo', 'treno', 'elicottero', 'trattore', 'sottomarino', 'monopattino', 'mongolfiera', 'ambulanza', 'autobus', 'moto', 'canoa', 'skateboard'],
-  Sport: ['calcio', 'tennis', 'nuoto', 'sci', 'basket', 'pallavolo', 'boxe', 'golf', 'surf', 'ciclismo', 'scherma', 'karate', 'pattinaggio', 'bowling', 'equitazione'],
-  Lavori: ['pompiere', 'dottore', 'cuoco', 'poliziotto', 'pittore', 'muratore', 'parrucchiere', 'postino', 'pilota', 'dentista', 'meccanico', 'giardiniere', 'cameriere', 'idraulico', 'insegnante'],
-  Feste: ['Natale', 'Halloween', 'Pasqua', 'Carnevale', 'compleanno', 'matrimonio', 'Capodanno', 'San Valentino', 'laurea', 'battesimo', 'sagra', 'concerto', 'grigliata', 'pigiama party', 'festa a sorpresa'],
-  Natura: ['albero', 'fiore', 'nuvola', 'arcobaleno', 'fulmine', 'sole', 'luna', 'stella', 'cactus', 'fungo', 'foglia', 'tornado', 'neve', 'onda', 'montagna'],
+  Animali: ['gatto', 'cane', 'giraffa', 'elefante', 'pinguino', 'serpente', 'polpo', 'farfalla', 'coccodrillo', 'canguro', 'tartaruga', 'gallina', 'squalo', 'scimmia', 'lumaca', 'pipistrello', 'riccio', 'fenicottero', 'balena', 'ragno'],
+  Cibo: ['pizza', 'gelato', 'banana', 'hamburger', 'torta', 'spaghetti', 'anguria', 'uovo', 'panino', 'ciambella', 'fragola', 'popcorn', 'carota', 'formaggio', 'cornetto', 'sushi', 'hot dog', 'ananas', 'lecca lecca', 'patatine fritte'],
+  Oggetti: ['ombrello', 'occhiali', 'chitarra', 'forbici', 'lampadina', 'orologio', 'telefono', 'chiave', 'candela', 'zaino', 'scopa', 'martello', 'valigia', 'spazzolino', 'sedia', 'tazza', 'lampada', 'cuscino', 'pettine', 'bottiglia'],
+  Luoghi: ['spiaggia', 'castello', 'vulcano', 'isola', 'piscina', 'ospedale', 'scuola', 'circo', 'faro', 'igloo', 'piramide', 'stadio', 'cimitero', 'fattoria', 'luna park', 'deserto', 'grotta', 'stazione', 'chiesa', 'bosco'],
+  Personaggi: ['pirata', 'sirena', 'fantasma', 'mago', 'astronauta', 'vampiro', 'robot', 're', 'strega', 'cowboy', 'ninja', 'zombie', 'clown', 'principessa', 'alieno', 'cavaliere', 'fata', 'mummia', 'supereroe', 'Babbo Natale'],
+  Mezzi: ['bicicletta', 'aereo', 'nave', 'razzo', 'treno', 'elicottero', 'trattore', 'sottomarino', 'monopattino', 'mongolfiera', 'ambulanza', 'autobus', 'moto', 'canoa', 'skateboard', 'camion', 'taxi', 'carrozza', 'gondola', 'funivia'],
+  Sport: ['calcio', 'tennis', 'nuoto', 'sci', 'basket', 'pallavolo', 'boxe', 'golf', 'surf', 'ciclismo', 'scherma', 'karate', 'pattinaggio', 'bowling', 'equitazione', 'rugby', 'arrampicata', 'tuffi', 'baseball', 'pesca'],
+  Lavori: ['pompiere', 'dottore', 'cuoco', 'poliziotto', 'pittore', 'muratore', 'parrucchiere', 'postino', 'pilota', 'dentista', 'meccanico', 'giardiniere', 'cameriere', 'idraulico', 'insegnante', 'contadino', 'veterinario', 'barbiere', 'fotografo', 'elettricista'],
+  Feste: ['Natale', 'Halloween', 'Pasqua', 'Carnevale', 'compleanno', 'matrimonio', 'Capodanno', 'San Valentino', 'laurea', 'battesimo', 'sagra', 'concerto', 'grigliata', 'pigiama party', 'festa a sorpresa', 'Pasquetta', 'Ferragosto', 'Epifania', 'festa di paese', 'prima comunione'],
+  Natura: ['albero', 'fiore', 'nuvola', 'arcobaleno', 'fulmine', 'sole', 'luna', 'stella', 'cactus', 'fungo', 'foglia', 'tornado', 'neve', 'onda', 'montagna', 'cascata', 'fiume', 'conchiglia', 'girasole', 'iceberg'],
+  'Corpo umano': ['occhio', 'naso', 'bocca', 'orecchio', 'mano', 'piede', 'dente', 'cuore', 'cervello', 'scheletro', 'baffi', 'barba', 'capelli', 'unghia', 'ginocchio', 'lingua', 'pancia', 'muscoli', 'ombelico', 'sopracciglia'],
+  Casa: ['divano', 'letto', 'frigorifero', 'lavatrice', 'televisione', 'doccia', 'finestra', 'porta', 'scala', 'camino', 'tappeto', 'specchio', 'armadio', 'tavolo', 'lampadario', 'water', 'forno', 'termosifone', 'tetto', 'campanello'],
+  Musica: ['pianoforte', 'batteria', 'tromba', 'violino', 'microfono', 'cuffie', 'flauto', 'arpa', 'sassofono', 'fisarmonica', 'maracas', 'triangolo', 'nota musicale', 'radio', 'giradischi', 'altoparlante', "direttore d'orchestra", 'tamburello', 'campana', 'chitarra elettrica'],
+  'Fantasy e mostri': ['drago', 'unicorno', 'troll', 'gnomo', 'elfo', 'orco', 'ciclope', 'yeti', 'lupo mannaro', 'Frankenstein', 'fenice', 'centauro', 'gigante', 'folletto', 'pozione', 'bacchetta magica', 'sfera di cristallo', 'scopa volante', 'castello incantato', 'mostro di Loch Ness'],
+  Vestiti: ['cravatta', 'maglione', 'jeans', 'gonna', 'calzini', 'stivali', 'sciarpa', 'guanti', 'pigiama', 'costume da bagno', 'tuta', 'giacca', 'canottiera', 'ciabatte', 'tacchi', 'occhiali da sole', 'cintura', 'felpa', 'vestito da sposa', 'kimono'],
+  Spazio: ['pianeta', 'Saturno', 'astronave', 'satellite', 'cometa', 'meteorite', 'buco nero', 'UFO', 'telescopio', 'stella cadente', 'luna piena', 'eclissi', 'tuta spaziale', 'stazione spaziale', 'Marte', 'galassia', 'costellazione', 'razzo', 'marziano', 'sole'],
 };
 
-// 🌶️ Categoria piccante (stanze con i contenuti piccanti attivi)
+// 🌶️ Categorie piccanti (stanze con i contenuti piccanti attivi)
 export const ARTIST_WORDS_SPICY: Record<string, string[]> = {
-  'Amori disastrosi': ['ex', 'Tinder', 'primo bacio', 'corna', 'succhiotto', 'serenata', 'anello', 'luna di miele', 'gelosia', 'appuntamento al buio', 'cuore spezzato', 'mazzo di rose', 'bikini', 'suocera', 'divorzio'],
-  'Serate pazze': ['sbronza', 'kebab', 'discoteca', 'karaoke', 'buttafuori', 'shottino', 'mutande', 'selfie', 'mal di testa', 'tacchi', 'tatuaggio', 'cocktail', 'scoreggia', 'pista da ballo', 'pancia da birra'],
+  'Amori disastrosi': ['ex', 'Tinder', 'primo bacio', 'corna', 'succhiotto', 'serenata', 'anello', 'luna di miele', 'gelosia', 'appuntamento al buio', 'cuore spezzato', 'mazzo di rose', 'bikini', 'suocera', 'divorzio', 'amante', 'friendzone', 'due di picche', 'motel a ore', 'chat segreta'],
+  'Serate pazze': ['sbronza', 'kebab', 'discoteca', 'karaoke', 'buttafuori', 'shottino', 'mutande', 'selfie', 'mal di testa', 'tacchi', 'tatuaggio', 'cocktail', 'scoreggia', 'pista da ballo', 'pancia da birra', 'vomito', 'coma etilico', 'alcoltest', 'beer pong', 'ubriaco al lampione'],
+  'Sotto le lenzuola': ['pisello', 'tette', 'culo', 'capezzolo', 'perizoma', 'reggiseno', 'preservativo', 'vibratore', 'manette', 'frusta', 'bambola gonfiabile', 'pornostar', 'lap dance', 'sexy shop', 'pillola blu', 'kamasutra', 'cintura di castità', 'letto che cigola', 'spermatozoo', 'test di gravidanza'],
+  'Fluidi e schifezze': ['cacca', 'pipì', 'diarrea', 'moccio', 'caccola', 'brufolo', 'forfora', 'pidocchi', 'alito pesante', 'piedi puzzolenti', 'ascelle sudate', 'cerume', 'water intasato', 'carta igienica', 'supposta', 'emorroidi', 'pannolone', 'bagno chimico', 'peli nel lavandino', 'rutto'],
+  'Funerali e morte': ['bara', 'lapide', 'becchino', 'carro funebre', 'cimitero', 'urna', 'testamento', 'vedova', 'corona di fiori', 'teschio', 'la Morte', 'falce', 'fantasma', 'necrologio', 'obitorio', 'ghigliottina', 'veleno', 'zombie', 'seduta spiritica', 'cremazione'],
+  'Paradiso e inferno': ['Dio', 'Gesù', 'Madonna', 'San Pietro', 'angelo', 'diavolo', 'forcone', 'aureola', 'Papa', 'suora', 'prete', 'confessionale', 'Ultima cena', 'Arca di Noè', 'Adamo ed Eva', 'miracolo', 'acqua santa', 'presepe', 'Mosè', 'Giuda'],
+  'Ospedale e vecchiaia': ['dentiera', 'parrucchino', 'flebo', 'siringa', 'clistere', 'catetere', 'colonscopia', 'barella', 'ambulanza', 'gesso', 'badante', 'ospizio', 'rughe', 'umarell', 'tombola', "padella dell'ospedale", 'Viagra', 'termometro', 'guanto di lattice', 'camice'],
+  'Vizi e sostanze': ['canna', 'bong', 'cocaina', 'funghetti', 'sigaretta', 'narghilè', 'slot machine', 'Gratta e Vinci', 'grappa', 'vino in cartone', 'spacciatore', 'pianta di marijuana', 'roulette', 'casinò', 'fiches', 'sigaro', 'accendino', 'birra', 'whisky', 'damigiana'],
+  'VIP da sfottere': ['Totti', 'Cristiano Ronaldo', 'Messi', 'Al Bano', 'Vasco Rossi', 'Berlusconi', 'Briatore', 'Chiara Ferragni', 'Fedez', 'Sgarbi', 'Gianni Morandi', 'Maria De Filippi', 'Elon Musk', 'Maradona', 'Mourinho', 'Gianluca Vacchi', 'Ozzy Osbourne', 'Padre Pio', 'regina Elisabetta', 'Ibrahimović'],
 };

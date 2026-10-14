@@ -10,5 +10,9 @@ import './infiltrato';
 import './nomicose';
 import './dizionario';
 import './mente';
+import './codici';
+import './scala10';
+import './gregge';
+import './microsfide';
 
 export { FLAT_MODES } from './registry';

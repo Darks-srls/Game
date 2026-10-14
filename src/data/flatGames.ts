@@ -236,7 +236,8 @@ export const FLAT_GAMES: FlatInfo[] = [
     options: [{ key: 'meta', label: '🏁 Punti per vincere', values: [[6, '6'], [8, '8'], [10, '10']], def: 8 }],
     rules: [
       'Esce una domanda (“un frutto giallo”, “un posto dove non baceresti mai nessuno”). Tutti scrivono una risposta in segreto.',
-      'Chi ha scritto la risposta più comune prende un punto.',
+      'Poi le risposte uguali si raggruppano da sole (e potete unire o separare i gruppi a mano).',
+      'Chi ha scritto la risposta più comune prende un punto; se i gruppi più grandi sono pari, nessun punto.',
       'Se UNO SOLO ha una risposta diversa da tutti, prende la pecora nera: finché ce l’ha non può vincere.',
       'Vince chi arriva ai punti senza la pecora nera.',
     ],

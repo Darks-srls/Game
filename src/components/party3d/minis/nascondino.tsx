@@ -558,6 +558,7 @@ registerClientMini({
       const m = outlined(new THREE.Mesh(rbox(w, wallH, d, 0.06), wallM), 1.01);
       m.position.set(x, wallH / 2, z);
       g.add(shadowy(m));
+      world.camBlockers.push(m); // la telecamera non resta fuori dalla dispensa
     };
     const pw = PANTRY.x1 - PANTRY.x0;
     wall(PANTRY.x0 - 0.15, (PANTRY.z0 + PANTRY.z1) / 2, 0.3, PANTRY.z1 - PANTRY.z0 + 0.3);
@@ -569,6 +570,7 @@ registerClientMini({
     const lintel = new THREE.Mesh(rbox(HIDE.door * 2 + 0.2, 0.5, 0.32, 0.06), wallM);
     lintel.position.set(0, wallH - 0.25, PANTRY.z0);
     g.add(lintel);
+    world.camBlockers.push(lintel);
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(3, 0.75), new THREE.MeshBasicMaterial({ map: label('DISPENSA', '#c1121f'), transparent: true, toneMapped: false }));
     sign.position.set(0, wallH + 0.45, PANTRY.z0 - 0.2);
     sign.rotation.y = Math.PI;
@@ -586,6 +588,7 @@ registerClientMini({
       pivot.userData.s = s;
       doors.push(pivot);
       g.add(shadowy(pivot));
+      world.camBlockers.push(pivot);
     }
     // scaffali coi sacchi dentro la dispensa
     for (const y of [0.8, 1.7]) {
@@ -608,6 +611,7 @@ registerClientMini({
         embers = m.getObjectByName('embers') as THREE.Mesh;
       }
       g.add(m);
+      if (f.h > 2 || f.k === 'mercato') world.camBlockers.push(m); // i mobili alti (il forno, le botti, la tenda del mercato)
     }
     // gli oggetti veri (stessa ricetta dei travestimenti)
     const arenaKit: Kit = { g: propGeos(), m: propMats() };
@@ -662,14 +666,14 @@ registerClientMini({
         l.position.set(Math.sin(b) * 1.6, 3.4 + (k % 2) * 0.6, Math.cos(b) * 1.6);
         t.add(l);
       }
-      t.position.set(Math.sin(a) * 21, 0, Math.cos(a) * 21);
+      t.position.set(Math.sin(a) * 28, 0, Math.cos(a) * 28); // lontani: la telecamera non ci finisce dentro
       g.add(shadowy(t));
     }
     const balloons: THREE.Group[] = [];
     for (let i = 0; i < 8; i++) {
       const b = balloon(['#ff4d6d', '#ffd60a', '#3a86ff', '#06d6a0'][i % 4]);
       const a = (i / 8) * Math.PI * 2;
-      b.position.set(Math.sin(a) * 19, 6 + (i % 3) * 2, Math.cos(a) * 19);
+      b.position.set(Math.sin(a) * 28, 8 + (i % 3) * 2, Math.cos(a) * 28);
       b.userData.y0 = b.position.y;
       balloons.push(b);
       g.add(b);
@@ -701,7 +705,7 @@ registerClientMini({
       });
       for (const b of balloons) b.position.y = b.userData.y0 + Math.sin(f.t * 0.8 + b.userData.phase) * 0.6;
       const va = f.t * 0.22;
-      scooter.position.set(Math.sin(va) * 25, 0, Math.cos(va) * 25);
+      scooter.position.set(Math.sin(va) * 31, 0, Math.cos(va) * 31);
       scooter.rotation.y = va + Math.PI / 2;
       // cercatore: dove andrebbe il colpo (oggetti veri e travestiti, senza distinzione)
       aim.visible = false;

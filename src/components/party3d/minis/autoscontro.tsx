@@ -52,14 +52,14 @@ function kit() {
     column: new THREE.CylinderGeometry(0.035, 0.035, 0.45, 8),
     pole: new THREE.CylinderGeometry(0.04, 0.05, 2.5, 8),
     ball: new THREE.SphereGeometry(0.09, 10, 8),
-    spark: new THREE.OctahedronGeometry(0.2, 0),
+    spark: new THREE.OctahedronGeometry(0.13, 0),
     flame,
     rubber: toy('#262338', { roughness: 0.7, clearcoat: 0.1 }),
     chrome: new THREE.MeshStandardMaterial({ color: '#dfe7f2', metalness: 0.9, roughness: 0.2 }),
     seatM: toy('#2b2d42', { roughness: 0.55 }),
     dark: toy('#1d1b2c'),
-    lamp: glow('#fff3b0', 2.2),
-    sparkM: new THREE.MeshBasicMaterial({ color: '#bfe9ff', transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }),
+    lamp: glow('#fff3b0', 1.3),
+    sparkM: new THREE.MeshBasicMaterial({ color: '#6fc8ff', transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false }),
     flameM: new THREE.MeshBasicMaterial({ color: '#ff9f1c', transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }),
     bodies: new Map(),
   };
@@ -124,7 +124,7 @@ function granitaTexture() {
   return canvasTex(1024, 1024, (c) => {
     const cx = 512;
     const g = c.createRadialGradient(cx, cx, 40, cx, cx, 512);
-    g.addColorStop(0, '#fffbe0');
+    g.addColorStop(0, '#fff2bd');
     g.addColorStop(0.55, '#fff3a8');
     g.addColorStop(1, '#ffe066');
     c.fillStyle = g;
@@ -351,14 +351,15 @@ registerClientMini({
     const R0 = AUTO.r0;
     // la granita: un disco di ghiaccio al limone che si scioglie dai bordi
     const rink = new THREE.Group();
-    const top = toy('#ffffff', { map: granitaTexture(), roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.08 });
+    // (poco lucida: con il sole sopra una granita a specchio abbagliava tutta la pista)
+    const top = toy('#ffffff', { map: granitaTexture(), roughness: 0.6, clearcoat: 0.2, clearcoatRoughness: 0.6 });
     const side = toy('#ffffff', { map: sideTexture(), roughness: 0.4 });
     const disc = new THREE.Mesh(new THREE.CylinderGeometry(R0, R0 * 0.94, 1.4, 96), [side, top, toy('#ffe9a8')]);
     disc.position.y = -0.7;
     disc.receiveShadow = true;
     rink.add(disc);
     // bordo che brilla (rosso quando si scioglie)
-    const edgeM = glow('#ffd60a', 1.6);
+    const edgeM = glow('#ffd60a', 1.0);
     const edge = new THREE.Mesh(new THREE.TorusGeometry(R0, 0.13, 8, 128), edgeM);
     edge.rotation.x = Math.PI / 2;
     edge.position.y = 0.04;
@@ -367,7 +368,7 @@ registerClientMini({
     // luci da luna park tutto intorno (si rincorrono)
     const NB = 72;
     const bulbs = new THREE.InstancedMesh(new THREE.SphereGeometry(0.16, 10, 8), new THREE.MeshBasicMaterial({ toneMapped: false }), NB);
-    const bulbCols = ['#ff4d6d', '#ffd60a', '#70d6ff'].map((c) => new THREE.Color(c).multiplyScalar(2.2));
+    const bulbCols = ['#ff4d6d', '#ffd60a', '#70d6ff'].map((c) => new THREE.Color(c).multiplyScalar(1.4));
     const dim = new THREE.Color('#5a4a6a');
     const dummy = new THREE.Object3D();
     let bulbR = -1;
@@ -381,7 +382,7 @@ registerClientMini({
     const foot = new THREE.Mesh(new THREE.CylinderGeometry(6, 6.5, 0.8, 40), toy('#ffd6e0', { roughness: 0.2 }));
     foot.position.y = -16.2;
     const straw = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 18, 12), toy('#ff4d6d'));
-    straw.position.set(-R0 - 2.5, -2, -3);
+    straw.position.set(-R0 - 20, -8, -10);
     straw.rotation.z = 0.35;
     g.add(cup, stem, foot, straw);
     // mare di sciroppo di fragola, laggiù
@@ -425,26 +426,29 @@ registerClientMini({
     t2.scale.setScalar(0.8);
     g.add(t1, t2);
     const sg = sign();
-    sg.position.set(0, -6, R0 + 9);
+    sg.position.set(0, -6, R0 + 17);
     sg.rotation.y = Math.PI;
     g.add(sg);
     for (let i = 0; i < 4; i++) {
       const a1 = (i / 4) * Math.PI * 2 + Math.PI / 4;
       const a2 = ((i + 1) / 4) * Math.PI * 2 + Math.PI / 4;
-      g.add(flagLine(new THREE.Vector3(Math.sin(a1) * (R0 + 5), 9, Math.cos(a1) * (R0 + 5)), new THREE.Vector3(Math.sin(a2) * (R0 + 5), 9, Math.cos(a2) * (R0 + 5)), 16));
-      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 26, 8), toy('#ffffff'));
-      pole.position.set(Math.sin(a1) * (R0 + 5), -4, Math.cos(a1) * (R0 + 5));
+      // (lontane e alte: la telecamera dietro di me non ci passa in mezzo)
+      g.add(flagLine(new THREE.Vector3(Math.sin(a1) * (R0 + 14), 15, Math.cos(a1) * (R0 + 14)), new THREE.Vector3(Math.sin(a2) * (R0 + 14), 15, Math.cos(a2) * (R0 + 14)), 18));
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.3, 32, 8), toy('#ffffff'));
+      pole.position.set(Math.sin(a1) * (R0 + 14), -1, Math.cos(a1) * (R0 + 14));
       g.add(pole);
     }
     const balloons: THREE.Group[] = [];
     for (let i = 0; i < 10; i++) {
       const b = balloon(['#ff4d6d', '#ffd60a', '#3a86ff', '#06d6a0', '#ff70a6'][i % 5]);
       const a = (i / 10) * Math.PI * 2 + 0.2;
-      b.position.set(Math.sin(a) * (R0 + 8), 3 + (i % 3) * 2.5, Math.cos(a) * (R0 + 8));
+      b.position.set(Math.sin(a) * (R0 + 16), 8 + (i % 3) * 2.5, Math.cos(a) * (R0 + 16));
       b.userData.y0 = b.position.y;
       balloons.push(b);
       g.add(b);
     }
+    // le decorazioni grandi: se finiscono tra me e la telecamera, la telecamera si avvicina
+    world.camBlockers.push(sg, wheel, t1, t2, straw);
     // ombre più strette sulla pista
     const sh = world.sun.shadow.camera;
     sh.left = sh.bottom = -17;
@@ -457,7 +461,7 @@ registerClientMini({
       const melting = f.view.stage === 'PLAY' && f.playT > AUTO.shrinkFrom && R > AUTO.rMin;
       edgeM.color.set(melting ? '#ff4d6d' : '#ffd60a');
       edgeM.emissive.set(melting ? '#ff4d6d' : '#ffd60a');
-      edgeM.emissiveIntensity = melting ? 1.6 + Math.sin(f.t * 10) * 0.8 : 1.4;
+      edgeM.emissiveIntensity = melting ? 1.0 + Math.sin(f.t * 10) * 0.4 : 0.8;
       // luci che si rincorrono (le sposto solo se la pista è cambiata)
       const step = Math.floor(f.t * 7);
       if (Math.abs(bulbR - R) > 0.01 || step !== bulbStep) {
@@ -527,7 +531,8 @@ registerClientMini({
     const turbo = id === f.myId ? (f.me.dashT ?? 0) > 0 : f.others.get(id)?.a === ANIM.dash;
     U.flame.visible = turbo;
     if (turbo) U.flame.scale.set(1, 1, 0.8 + Math.random() * 0.6);
-    const s = (turbo ? 1.6 : 0.8) + Math.random() * 0.7;
+    // (piccola: sopra la mia auto sta proprio al centro dello schermo)
+    const s = ((turbo ? 1.3 : 0.7) + Math.random() * 0.4) * (id === f.myId ? 0.7 : 1);
     U.spark.scale.setScalar(s);
     U.spark.rotation.y = f.t * 9;
   },

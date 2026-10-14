@@ -375,12 +375,13 @@ registerClientMini({
     });
     const brushes: THREE.Object3D[] = [];
     [
-      [-16, -13, '#3a86ff', 0.25],
-      [16.5, 12.5, '#ff4d6d', -0.3],
-      [17, -12, '#06d6a0', -0.2],
+      [-22, -21, '#3a86ff', 0.25],
+      [22, 21, '#ff4d6d', -0.3],
+      [23, -20, '#06d6a0', -0.2],
     ].forEach(([x, z, col, tilt], i) => {
+      // (lontani dal quadro: la telecamera dietro di me non ci finisce dentro)
       const b = brush(col as string);
-      b.position.set(x as number, -1.4, z as number);
+      b.position.set(x as number, -6, z as number);
       b.rotation.set(tilt as number, i, (tilt as number) * 0.8);
       g.add(b);
       brushes.push(b);
@@ -410,14 +411,19 @@ registerClientMini({
     const pic = new THREE.Mesh(new THREE.PlaneGeometry(6.6, 6.6), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false }));
     pic.position.set(0, 7.2, -0.2);
     pic.rotation.set(0, Math.PI, Math.PI); // girato come il pavimento visto da chi gioca
-    easel.add(ledge, canvasFrame, pic);
-    easel.position.set(0, -1.2, PAINT.half + 6);
+    const isle = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 3.2, 1.2, 24), toy('#d39b5f', { roughness: 0.55 }));
+    isle.position.set(0, -2.2, 0.6);
+    easel.add(ledge, canvasFrame, pic, isle);
+    // grande e lontano (si vede da tutto il quadro, ma non sta mai tra me e la telecamera)
+    easel.position.set(0, -5, PAINT.half + 19);
+    easel.scale.setScalar(1.7);
     g.add(shadowy(easel));
+    world.camBlockers.push(easel, ...brushes);
     const balloons: THREE.Group[] = [];
     for (let i = 0; i < 10; i++) {
       const b = balloon(blobCols[i % blobCols.length]);
       const a = (i / 10) * Math.PI * 2 + 0.5;
-      b.position.set(Math.sin(a) * 21, 4 + (i % 3) * 2.2, Math.cos(a) * 19);
+      b.position.set(Math.sin(a) * 31, 9 + (i % 3) * 2.2, Math.cos(a) * 31);
       b.userData.y0 = b.position.y;
       balloons.push(b);
       g.add(b);

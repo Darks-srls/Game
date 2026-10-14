@@ -355,7 +355,7 @@ registerClientMini({
     for (let i = 0; i < 9; i++) {
       const b = balloon(SIMON_COLORS[i]);
       const a = (i / 9) * Math.PI * 2 + 0.35;
-      b.position.set(Math.sin(a) * 16, 3 + (i % 3) * 2.2, Math.cos(a) * 16);
+      b.position.set(Math.sin(a) * 30, 8 + (i % 3) * 2.2, Math.cos(a) * 30); // lontani: mai davanti alla telecamera
       b.userData.y0 = b.position.y;
       balloons.push(b);
       g.add(b);
@@ -365,6 +365,7 @@ registerClientMini({
     R.g.position.set(0, 0, SIMON.robotZ);
     R.g.rotation.y = Math.PI;
     g.add(R.g);
+    world.camBlockers.push(R.g); // chi gira le spalle a Simon non deve finirgli dentro con la telecamera
     let screenKey = '';
     const drawScreen = (big: string, small: string, color: string) => {
       const c = R.cv.getContext('2d')!;

@@ -205,7 +205,7 @@ export const sugoSweepAngle = (p: SugoPlat, t: number) => p.sweep * Math.max(0, 
 
 // il pavimento sotto i piedi: le ultime risposte di ground() (la velocità del pavimento non sa la quota:
 // la ritrova qui, perché il passo dopo chiede proprio il punto in cui il corpo è atterrato)
-const CACHE = 32;
+const CACHE = 96;
 const cacheX = new Float64Array(CACHE);
 const cacheZ = new Float64Array(CACHE);
 const cacheI = new Int16Array(CACHE).fill(SUGO_NONE);

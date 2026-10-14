@@ -124,54 +124,63 @@ function room(api: MiniApi<SpagState>, L: Live, x: number, z: number, cap: numbe
 function botBrain(api: MiniApi<SpagState>, b: MiniBot) {
   const me = b.body;
   const E = api.ext;
-  const M = b.mem as { dir?: number; next?: number; hopAt?: number };
+  const M = b.mem as { dir?: number; next?: number; hopAt?: number; oops?: number; oopsTurn?: number };
   const L = live(E);
   const idx = E.ids.indexOf(b.id);
   const mySeq = L.tr[idx]?.seq ?? 0;
   M.dir ??= me.r;
   heads = [];
   // (solo i più svegli pensano a dove andranno gli altri)
-  if (b.skill > 0.5) for (const id of api.inGame()) {
+  if (b.skill > 0.6) for (const id of api.inGame()) {
     if (id === b.id) continue;
     const p = api.pos(id);
     if (!p || p.y > SPAG.safeY) continue;
     const v = api.vel(id);
     heads.push(p.x, p.z, v.vx, v.vz);
   }
+  // i più scarsi ogni tanto fanno una sciocchezza (una curva a caso per un attimo)
+  if (api.now < (M.oops ?? 0)) M.dir += M.oopsTurn ?? 0;
+  else if (Math.random() < (1 - b.skill) ** 2 * 0.03) {
+    M.oops = api.now + api.rand(300, 600);
+    M.oopsTurn = api.rand(-0.25, 0.25);
+  }
   // i più scarsi ci pensano meno spesso, guardano meno lontano e contano peggio lo spazio
-  if (api.now >= (M.next ?? 0)) {
+  else if (api.now >= (M.next ?? 0)) {
     // (ogni tanto i più scarsi si distraggono un attimo)
     M.next = api.now + (Math.random() < (1 - b.skill) * 0.2 ? api.rand(150, 450) : 0);
-    const far = 2.5 + b.skill * 9;
-    const cap = Math.round(30 + b.skill * 220);
+    const far = 3 + b.skill * 6;
+    const cap = Math.round(30 + b.skill * 120);
     let best = M.dir;
     let bestS = -1e9;
     let bestFree = 0;
+    let bestArea = 0;
     for (let k = -6; k <= 6; k++) {
       const a = M.dir + (k * Math.PI) / 12;
       const free = freeAhead(api, L, me.x, me.z, a, far, idx, mySeq);
       let sc: number;
+      let area = 0;
       if (free < 1.1) sc = free - 20;
       else {
         // lo spazio che resta da lì in avanti (più è grande, meglio è: niente vicoli ciechi)
         const step = Math.min(free - 0.5, 2.5);
         const px = me.x + Math.sin(a) * step;
         const pz = me.z + Math.cos(a) * step;
-        const area = room(api, L, px, pz, cap);
-        // (i più bravi stanno lontani dal bordo: lì si resta chiusi in un angolo)
-        const edge = Math.max(0, 3.5 - (SPAG.half - Math.max(Math.abs(px), Math.abs(pz))));
+        area = room(api, L, px, pz, cap);
         sc = Math.min(area, cap) * 0.06 + Math.min(free, far) * 0.35 - Math.abs(k) * 0.06 + api.rand(0, 2.2) * (1 - b.skill);
       }
       if (sc > bestS) {
         bestS = sc;
         best = a;
         bestFree = free;
+        bestArea = area;
       }
     }
     // strada lunga e libera davanti: ogni tanto i più bravi scattano
     if (bestFree >= far - 0.1 && Math.abs(best - M.dir) < 0.1 && Math.random() < b.skill * 0.01) api.dash(b);
-    // niente scampo: salto sopra lo spaghetto più vicino, verso dove dall'altra parte c'è posto per atterrare
-    if (bestFree < 1.8 && me.ground && api.now >= (M.hopAt ?? 0)) {
+    // niente scampo (o, per i più bravi, sto finendo in un buco piccolo): salto sopra lo spaghetto più vicino,
+    // verso dove dall'altra parte c'è posto per atterrare e più spazio
+    const pocket = b.skill > 0.55 && bestArea < 30 && bestArea < cap * 0.5;
+    if ((bestFree < 1.8 || pocket) && me.ground && api.now >= (M.hopAt ?? 0)) {
       let jumpDir = NaN;
       let jumpHit = 0;
       let jumpRoom = -1;
@@ -185,14 +194,14 @@ function botBrain(api: MiniApi<SpagState>, b: MiniBot) {
         const land = freeAhead(api, L, bx, bz, a, 2.6, idx, -1e9);
         const wallOk = Math.abs(bx + Math.sin(a) * 2.6) < SPAG.half - 1.2 && Math.abs(bz + Math.cos(a) * 2.6) < SPAG.half - 1.2;
         if (!wallOk || land < 2.5) continue;
-        const r = room(api, L, bx + Math.sin(a) * 2.2, bz + Math.cos(a) * 2.2, 120) - Math.abs(k) * 2;
+        const r = room(api, L, bx + Math.sin(a) * 2.2, bz + Math.cos(a) * 2.2, 200) - Math.abs(k) * 2;
         if (r > jumpRoom) {
           jumpRoom = r;
           jumpDir = a;
           jumpHit = hit;
         }
       }
-      if (!Number.isNaN(jumpDir) && jumpRoom > 8) {
+      if (!Number.isNaN(jumpDir) && jumpRoom > (bestFree < 1.8 ? 8 : bestArea * 2 + 10)) {
         best = jumpDir;
         if (jumpHit >= 0.5 && jumpHit < 1.3 && Math.abs(Math.atan2(Math.sin(jumpDir - M.dir), Math.cos(jumpDir - M.dir))) < 0.3 && Math.random() < 0.3 + b.skill * 0.7) {
           b.input.jump = true;
@@ -292,7 +301,9 @@ registerServerMini<SpagState>({
       let by = -1;
       for (let k = 0; k < L.tr.length && by < 0; k++) {
         const T = L.tr[k];
-        const end = k === me ? T.xs.length - SPAG.ownSafe : T.xs.length;
+        // (il mio ultimo metro e mezzo non conta; degli altri non conta la punta appena fatta: la testa che passa)
+        let end = k === me ? T.xs.length - SPAG.ownSafe : T.xs.length;
+        if (k !== me) while (end > T.from && now - T.ts[end - 1] < SPAG.fresh) end--;
         for (let i = T.from; i < end; i++) {
           const x = T.xs[i];
           const z = T.zs[i];

@@ -12,7 +12,6 @@ import {
   sugoPend,
   sugoPlatAt,
   sugoSweepAngle,
-
   type SugoPlat,
 } from '../../src/data/minis/sugo';
 import { PHYS } from '../../src/data/party3d';
@@ -22,7 +21,6 @@ interface SugoState {
   best: Record<string, number>; // quota più alta raggiunta (per la classifica di chi non arriva)
   order: string[]; // ordine d'arrivo sul coperchio
   hitAt: Record<string, number>; // ultimo colpo preso (batticarne, mattarello)
-  prevT: number;
 }
 
 const DT = 1 / 15; // passo dei bot (il server gira 15 volte al secondo)
@@ -339,7 +337,7 @@ registerServerMini<SugoState>({
   kind: 'SUGO',
   ends: 'all',
   falls: 'none', // fuori solo chi tocca il sugo
-  init: () => ({ best: {}, order: [], hitAt: {}, prevT: 0 }),
+  init: () => ({ best: {}, order: [], hitAt: {} }),
   spawn: (_api, _id, i, n) => {
     // sulla focaccia, prima della prima fetta di pane, girati lungo il giro
     const rows = [9.4, 11.3, 13.2];
@@ -436,7 +434,6 @@ registerServerMini<SugoState>({
       b.mem.plan = { tgt: i + 1, dj: false, djDone: false, off: { x: api.rand(-sloppy, sloppy), z: api.rand(-sloppy, sloppy) } };
       api.emit({ k: 'sugo_boing', i, id: b.id });
     }
-    E.prevT = t;
     return changed;
   },
   bot: botBrain,
@@ -453,7 +450,6 @@ registerServerMini<SugoState>({
     for (const [, ids] of [...byH.entries()].sort((a, b) => b[0] - a[0])) groups.push(ids);
     return groups;
   },
-  view: (api) => ({ best: Object.fromEntries(Object.entries(api.ext.best).map(([id, v]) => [id, Math.round(v)])) }),
 });
 
 

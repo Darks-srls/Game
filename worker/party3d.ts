@@ -1472,7 +1472,9 @@ function moveBots(s: PState, ctx: Ctx, dt: number) {
     if (s.stage === 'PLAY' && s.alive[b.id]) botBrain(s, ctx, b);
     else b.input = { x: 0, z: 0, jump: false };
     const seat = seatedOn(s, b.id);
-    if (!sniper && seat < 0 && b.body.y > -40) {
+    // con la corsa automatica (es. lo spaghetto) durante la presentazione si sta fermi
+    const waiting = s.stage === 'INTRO' && !!MINIS[s.kind]?.autoRun;
+    if (!sniper && seat < 0 && b.body.y > -40 && !waiting) {
       // in luce rossa chi si è fermato resta fermo davvero (anche se in volo)
       const mul = api && mini?.speed ? mini.speed(api, b.id) : s.hen?.holder === b.id ? YARD.holderSpeed : s.bomb?.holder === b.id ? PLAZA.holderSpeed : 1;
       stepBody(b.body, b.input, dt, s.kind, t, (0.85 + b.skill * 0.2) * mul);

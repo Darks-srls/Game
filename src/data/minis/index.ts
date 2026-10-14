@@ -16,3 +16,6 @@ import './mattarello';
 import './bilancia';
 import './muro';
 import './corda';
+import './sugo';
+import './anelli';
+import './spaghetto';

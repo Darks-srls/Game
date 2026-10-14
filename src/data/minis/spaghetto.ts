@@ -9,6 +9,7 @@ export const SPAG = {
   hitR: 0.42, // tocchi lo spaghetto se passi più vicino di così…
   safeY: 0.7, // …e sei più in basso di così (saltando ci passi sopra)
   ownSafe: 3, // il mio ultimo metro e mezzo (3 pezzi) non mi fa niente
+  fresh: 250, // e la punta appena fatta degli altri neanche (ms): passare davanti a una testa non è toccare lo spaghetto
   speed: 0.75,
 };
 // quanto dura lo spaghetto: in tanti un po' meno (se no l'arena si riempie subito)

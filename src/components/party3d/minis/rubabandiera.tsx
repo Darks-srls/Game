@@ -205,10 +205,11 @@ registerClientMini({
     const walls = ['#f2c48d', '#e8907a', '#f6dfa4', '#f3b5a8'].map((c) => matte('#ffffff', { map: facadeTexture(c) }));
     const roofM = toy('#b5523b', { clearcoat: 0.15 });
     const houses: [number, number, number, number, number][] = []; // x, z, larghezza, altezza, verso
-    for (let i = 0; i < 6; i++) houses.push([-15 + i * 6, -D / 2 - 6, 5.8, 8 + ((i * 5) % 4), 0]);
-    for (let i = 0; i < 6; i++) houses.push([-15 + i * 6, D / 2 + 6, 5.8, 8 + ((i * 3) % 4), Math.PI]);
-    for (let i = 0; i < 3; i++) houses.push([-W / 2 - 6, -6 + i * 6, 5.8, 9 + (i % 2) * 2, Math.PI / 2]);
-    for (let i = 0; i < 3; i++) houses.push([W / 2 + 6, -6 + i * 6, 5.8, 8 + (i % 2) * 3, -Math.PI / 2]);
+    // (lontane dal selciato: la telecamera di chi è in fila deve starci davanti)
+    for (let i = 0; i < 6; i++) houses.push([-15 + i * 6, -D / 2 - 12, 5.8, 8 + ((i * 5) % 4), 0]);
+    for (let i = 0; i < 6; i++) houses.push([-15 + i * 6, D / 2 + 12, 5.8, 8 + ((i * 3) % 4), Math.PI]);
+    for (let i = 0; i < 3; i++) houses.push([-W / 2 - 8, -6 + i * 6, 5.8, 9 + (i % 2) * 2, Math.PI / 2]);
+    for (let i = 0; i < 3; i++) houses.push([W / 2 + 8, -6 + i * 6, 5.8, 8 + (i % 2) * 3, -Math.PI / 2]);
     houses.forEach(([x, z, w, h, r], i) => {
       const hg = new THREE.Group();
       const body = new THREE.Mesh(rbox(w, h, 6, 0.12), walls[i % walls.length]);
@@ -219,6 +220,7 @@ registerClientMini({
       hg.position.set(x, 0, z);
       hg.rotation.y = r;
       g.add(shadowy(hg));
+      world.camBlockers.push(hg);
     });
     // il campanile con la campana
     const tower = new THREE.Group();
@@ -235,14 +237,14 @@ registerClientMini({
     const clock = new THREE.Mesh(new THREE.CircleGeometry(1.2, 32), toy('#ffffff'));
     clock.position.set(0, 14, 2.02);
     tower.add(shaft, top, bellPivot, clock);
-    tower.position.set(8, 0, -D / 2 - 15);
+    tower.position.set(8, 0, -D / 2 - 24);
     g.add(shadowy(tower));
     // panni stesi tra le case (con gli strofinacci a quadretti, ovviamente)
     const lines: { pivot: THREE.Group; ph: number }[] = [];
     const lineM = matte('#ffffff');
     for (const [z, y] of [
-      [-D / 2 - 2.6, 6.4],
-      [D / 2 + 2.6, 6.2],
+      [-D / 2 - 8.6, 8.4],
+      [D / 2 + 8.6, 8.2],
     ]) {
       const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, W + 4, 4), lineM);
       wire.rotation.z = Math.PI / 2;
@@ -280,14 +282,23 @@ registerClientMini({
       }
       tree.position.set(x, 0, z);
       g.add(shadowy(tree));
+      world.camBlockers.push(tree);
     }
-    g.add(flagLine(new THREE.Vector3(-W / 2 - 0.2, 4.4, -D / 2 - 0.2), new THREE.Vector3(W / 2 + 0.2, 4.4, D / 2 + 0.2), 26));
-    g.add(flagLine(new THREE.Vector3(W / 2 + 0.2, 4.4, -D / 2 - 0.2), new THREE.Vector3(-W / 2 - 0.2, 4.4, D / 2 + 0.2), 26));
+    // bandierine alte, sopra il marciapiede (non in mezzo al cortile dove passa la telecamera)
+    for (const sz of [-1, 1]) {
+      g.add(flagLine(new THREE.Vector3(-W / 2 - 0.2, 7.6, sz * (D / 2 + 5)), new THREE.Vector3(W / 2 + 0.2, 7.6, sz * (D / 2 + 5)), 24));
+      for (const sx of [-1, 1]) {
+        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 7.8, 8), toy('#2e5d4b'));
+        pole.position.set(sx * (W / 2 + 0.2), 3.9, sz * (D / 2 + 5));
+        g.add(pole);
+      }
+    }
     // la nonna: braccio teso con lo strofinaccio (la ciabatta oggi resta in tasca)
     const nonna = makeNonna();
     nonna.position.set(RUBA.nonnaX, 0, 0);
     (nonna.userData.arm as THREE.Group).visible = false;
     g.add(nonna);
+    world.camBlockers.push(nonna);
     const sleeve = outlined(new THREE.Mesh(rbox(1.25, 0.34, 0.34, 0.14), toy('#6a4c93')), 1.05);
     sleeve.position.set(RUBA.nonnaX - 0.72, 2.12, 0);
     const hand = new THREE.Mesh(new THREE.SphereGeometry(0.2, 14, 10), toy('#ffd8b1'));

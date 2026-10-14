@@ -199,6 +199,7 @@ registerClientMini({
       fork.position.set(sx * (AVV.halfX + 1.6), 0, 0);
       fork.rotation.z = sx * 0.12;
       g.add(shadowy(fork));
+      world.camBlockers.push(fork);
     }
     // il pentolone del sugo che fuma (da lì vengono le polpette)
     const pot = new THREE.Group();
@@ -221,8 +222,9 @@ registerClientMini({
     ladle.position.set(1.2, 5, 0.6);
     ladle.rotation.z = -0.45;
     pot.add(ladle);
-    pot.position.set(-AVV.halfX - 7, 0, -4);
+    pot.position.set(-AVV.halfX - 10, 0, -4);
     g.add(shadowy(pot));
+    world.camBlockers.push(pot);
     const steamM = new THREE.MeshStandardMaterial({ color: '#ffffff', transparent: true, opacity: 0.5, roughness: 1 });
     const steamGeo = new THREE.IcosahedronGeometry(0.9, 1);
     const steam = Array.from({ length: 7 }, (_, i) => {
@@ -239,6 +241,7 @@ registerClientMini({
       const step = outlined(new THREE.Mesh(rbox(2, 1 + row * 1.1, D + 2, 0.15), toy(row % 2 ? '#ffbe0b' : '#fb8500')), 1.01);
       step.position.set(AVV.halfX + 4 + row * 2, (1 + row * 1.1) / 2 - 0.2, 0);
       g.add(shadowy(step));
+      world.camBlockers.push(step);
       for (let k = 0; k < 30; k++) {
         const i = base.length;
         base.push({ x: AVV.halfX + 4 + row * 2 + (Math.random() - 0.5) * 0.5, y: 1 + row * 1.1 + 0.35, z: -D / 2 + 0.8 + k * ((D - 1.6) / 29), ph: Math.random() * 6 });
@@ -282,6 +285,7 @@ registerClientMini({
     );
     banner.position.set(0, 9.6, -AVV.halfZ - 3);
     g.add(shadowy(banner));
+    world.camBlockers.push(banner);
     // le 4 polpette di gioco (con l'alone del colore di chi l'ha lanciata, quando volano)
     const balls = Array.from({ length: AVV.balls }, () => {
       const m = meatball();

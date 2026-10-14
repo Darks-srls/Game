@@ -21,6 +21,7 @@ type Ext = {
 } | null;
 
 const NEST_NAME = ['ROSSO', 'BLU'];
+const FLAG_W = 2;
 const PASTEL = ['#fff3e0', '#ffd1dc', '#c9ecff', '#d4f5c9', '#fff2a8', '#e5d9ff'].map((c) => new THREE.Color(c));
 // la gallona fa l'uovo (animazione): quando e verso dove
 let layAt = -9;
@@ -294,21 +295,25 @@ registerClientMini({
       halo.rotation.x = -Math.PI / 2;
       halo.position.set(nx, 0.03, 0);
       halos.push(haloM);
-      const pole = outlined(new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 6.4, 10), toy('#ffffff')), 1.08);
-      pole.position.set(nx + out * 2.75, 3.2, 0);
-      const knob = new THREE.Mesh(new THREE.SphereGeometry(0.26, 14, 10), glow('#ffd60a', 1.4));
-      knob.position.set(nx + out * 2.75, 6.5, 0);
-      const flagGeo = new THREE.PlaneGeometry(2.8, 1.75, 10, 1);
-      flagGeo.translate(1.4, 0, 0);
+      // bandiera bassa e di lato al nido (non davanti alla telecamera di chi ci arriva)
+      const fz = -(UOVA.nestR + 1.3);
+      const pole = outlined(new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.13, 4.3, 10), toy('#ffffff')), 1.08);
+      pole.position.set(nx + out * 0.6, 2.15, fz);
+      const knob = new THREE.Mesh(new THREE.SphereGeometry(0.22, 14, 10), glow('#ffd60a', 1.4));
+      knob.position.set(nx + out * 0.6, 4.35, fz);
+      const flagGeo = new THREE.PlaneGeometry(FLAG_W, 1.25, 10, 1);
+      flagGeo.translate(FLAG_W / 2, 0, 0);
       const flag = new THREE.Mesh(flagGeo, toy('#ffffff', { map: flagTexture(t), side: THREE.DoubleSide, clearcoat: 0.1 }));
-      flag.position.set(nx + out * 2.75, 5.45, 0);
-      flag.rotation.y = -Math.PI / 2;
+      flag.position.set(nx + out * 0.6, 3.55, fz);
+      flag.rotation.y = Math.PI / 2;
       flags.push({ mesh: flag, base: Float32Array.from(flagGeo.attributes.position.array as ArrayLike<number>) });
+      world.camBlockers.push(pole, flag);
       g.add(shadowy(ring), bed, halo, shadowy(pole), knob, shadowy(flag));
     }
     // la gallona al centro
     const hen = makeBigHen();
     g.add(hen);
+    world.camBlockers.push(hen);
     const henBody = hen.userData.body as THREE.Group;
     const wings = hen.userData.wings as THREE.Group[];
     // le uova: tutte uguali (pastello e d'oro), disegnate in blocco
@@ -345,20 +350,23 @@ registerClientMini({
     cross.position.set(0, 2.5, 4.68);
     cross.rotation.z = 0.85;
     barn.add(walls, roof, door, cross);
-    barn.position.set(-3, 0, -UOVA.halfZ - 11);
+    barn.position.set(-3, 0, -UOVA.halfZ - 16);
     g.add(shadowy(barn));
+    world.camBlockers.push(barn);
     const silo = new THREE.Group();
     const tube = new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.3, 12, 28), toy('#e5e5e5'));
     tube.position.y = 6;
     const dome = new THREE.Mesh(new THREE.SphereGeometry(2.3, 28, 14, 0, Math.PI * 2, 0, Math.PI / 2), toy('#d62828'));
     dome.position.y = 12;
     silo.add(tube, dome);
-    silo.position.set(10, 0, -UOVA.halfZ - 10);
+    silo.position.set(11, 0, -UOVA.halfZ - 15);
     g.add(shadowy(silo));
+    world.camBlockers.push(silo);
     const mill = windmill();
     mill.position.set(-UOVA.halfX - 9, 0, UOVA.halfZ + 7);
     mill.rotation.y = 2.4;
     g.add(mill);
+    world.camBlockers.push(mill);
     const hub = mill.userData.hub as THREE.Group;
     const hayM = toy('#ffffff', { map: strawTex([3, 1]), clearcoat: 0 });
     for (let i = 0; i < 8; i++) {
@@ -367,10 +375,11 @@ registerClientMini({
       hay.rotation.set(0, a, Math.PI / 2);
       hay.position.set(Math.sin(a) * (UOVA.halfX + 5.5), 0.5, Math.cos(a) * (UOVA.halfZ + 5));
       g.add(shadowy(hay));
+      world.camBlockers.push(hay);
     }
     // girasoli lungo i lati lunghi
     const flowers: THREE.Vector3[] = [];
-    for (let i = 0; i < 26; i++) flowers.push(new THREE.Vector3(-UOVA.halfX + 1 + (i % 13) * 2.3, 0, (i < 13 ? -1 : 1) * (UOVA.halfZ + 2.2 + (i % 2) * 0.8)));
+    for (let i = 0; i < 26; i++) flowers.push(new THREE.Vector3(-UOVA.halfX + 1 + (i % 13) * 2.3, 0, (i < 13 ? -1 : 1) * (UOVA.halfZ + 4.2 + (i % 2) * 0.8)));
     const stemM = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.08, 0.1, 2.4, 6), toy('#2d9c4a'), flowers.length);
     const headM = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.62, 0.62, 0.14, 14), toy('#ffd60a'), flowers.length);
     const coreM = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.32, 0.32, 0.18, 12), toy('#6b3e1f'), flowers.length);
@@ -398,7 +407,7 @@ registerClientMini({
     for (let i = 0; i < 8; i++) {
       const b = balloon([TEAM_COL[0], '#ffd60a', TEAM_COL[1], '#ffffff'][i % 4]);
       const a = (i / 8) * Math.PI * 2;
-      b.position.set(Math.sin(a) * (UOVA.halfX + 3), 6 + (i % 3) * 1.6, Math.cos(a) * (UOVA.halfZ + 3));
+      b.position.set(Math.sin(a) * (UOVA.halfX + 13), 9 + (i % 3) * 1.8, Math.cos(a) * (UOVA.halfZ + 12));
       b.userData.y0 = b.position.y;
       balloons.push(b);
       g.add(b);
@@ -503,7 +512,7 @@ registerClientMini({
       for (const fl of flags) {
         const pos = fl.mesh.geometry.attributes.position as THREE.BufferAttribute;
         for (let i = 0; i < pos.count; i++) {
-          const u = fl.base[i * 3] / 2.8;
+          const u = fl.base[i * 3] / FLAG_W;
           pos.setZ(i, Math.sin(t * 5 - u * 4) * 0.22 * u);
         }
         pos.needsUpdate = true;

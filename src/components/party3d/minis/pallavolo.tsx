@@ -293,10 +293,10 @@ registerClientMini({
     // spiaggia intorno: palme, ombrelloni, anguria gigante, carretto della granita, gabbiani, ciambella-pizza in mare
     const palms: THREE.Group[] = [];
     [
-      [-14, -10, 7],
-      [14, -6, 8],
-      [-13, 9, 6.5],
-      [15, 12, 7.5],
+      [-16, -10, 7],
+      [16, -6, 8],
+      [-15.5, 9, 6.5],
+      [16, 13, 7.5],
       [-6, 18, 6],
       [8, -18, 7],
     ].forEach(([x, z, h], i) => {
@@ -305,16 +305,18 @@ registerClientMini({
       p.rotation.y = i * 1.3;
       palms.push(p);
       g.add(p);
+      world.camBlockers.push(p);
     });
     [
-      [-11.5, -2, '#ff3b5c', '#ffffff'],
-      [11.5, 3, '#3a86ff', '#ffffff'],
-      [-11, 14, '#ffd60a', '#ff70a6'],
-      [12, -13, '#06d6a0', '#ffffff'],
+      [-14, -2, '#ff3b5c', '#ffffff'],
+      [14, 3, '#3a86ff', '#ffffff'],
+      [-13, 15, '#ffd60a', '#ff70a6'],
+      [13.5, -14, '#06d6a0', '#ffffff'],
     ].forEach(([x, z, a, b]) => {
       const u = umbrella(a as string, b as string);
       u.position.set(x as number, 0, z as number);
       g.add(u);
+      world.camBlockers.push(u);
     });
     const melon = new THREE.Group();
     const rind = outlined(new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 1, 32, 1, false, 0, Math.PI), [toy('#2d9c4a'), toy('#ff4d6d'), toy('#ff4d6d')]), 1.02);
@@ -327,8 +329,9 @@ registerClientMini({
       seed.scale.y = 1.6;
       melon.add(seed);
     }
-    melon.position.set(0, 0, -VOLLEY.halfZ - 6);
+    melon.position.set(0, 0, -VOLLEY.halfZ - 8);
     g.add(shadowy(melon));
+    world.camBlockers.push(melon);
     const cart = new THREE.Group();
     const box = outlined(new THREE.Mesh(rbox(2.6, 1.4, 1.4, 0.2), toy('#fff3b0')), 1.03);
     box.position.y = 1.3;
@@ -346,9 +349,10 @@ registerClientMini({
       cart.add(post);
     }
     cart.add(box, roofC, lemon);
-    cart.position.set(VOLLEY.halfX + 6, 0, 8);
+    cart.position.set(VOLLEY.halfX + 9, 0, 8);
     cart.rotation.y = -Math.PI / 2;
     g.add(shadowy(cart));
+    world.camBlockers.push(cart);
     // ciambella a forma di pizza che galleggia
     const floaty = new THREE.Mesh(new THREE.TorusGeometry(2, 0.7, 14, 32), toy('#f4a259', { clearcoat: 0.9 }));
     floaty.rotation.x = Math.PI / 2;
@@ -375,7 +379,7 @@ registerClientMini({
     const balloons: THREE.Group[] = [];
     for (let i = 0; i < 6; i++) {
       const b = balloon([TEAM_COL[0], '#ffd60a', TEAM_COL[1]][i % 3]);
-      b.position.set((i % 2 ? 1 : -1) * (VOLLEY.halfX + 3), 6 + (i % 3) * 1.6, -9 + i * 3.6);
+      b.position.set((i % 2 ? 1 : -1) * (VOLLEY.halfX + 11), 8 + (i % 3) * 1.6, -9 + i * 3.6);
       b.userData.y0 = b.position.y;
       balloons.push(b);
       g.add(b);

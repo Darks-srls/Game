@@ -257,7 +257,7 @@ function makeApi(s: PState, ctx: Ctx): MiniApi {
       if (x !== undefined && z !== undefined) b.body.r = Math.atan2(x - b.body.x, z - b.body.z);
       doPush(s, ctx, b.id);
     },
-    dash: (b) => botDash(s, ctx, b),
+    dash: (b) => botDash(s, ctx, b as Bot),
     rand,
   };
   return api;

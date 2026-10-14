@@ -112,7 +112,7 @@ export const FLAT_GAMES: FlatInfo[] = [
     max: 6,
     options: [],
     rules: [
-      'Ognuno ha 3 rose e 1 teschio. A turno si mette un disco coperto sulla propria pila.',
+      'Ognuno ha 3 rose e 1 teschio. All’inizio tutti mettono un disco coperto sulla propria pila.',
       'Quando tocca a te puoi aggiungere un disco o lanciare la sfida: “ne giro N senza trovare teschi”.',
       'Gli altri rilanciano o passano. Chi vince l’asta gira prima tutti i suoi dischi, poi quelli degli altri.',
       'Solo rose: un punto (due punti vincono). Un teschio: perdi un disco a caso. Chi resta senza dischi è fuori.',
@@ -176,7 +176,7 @@ export const FLAT_GAMES: FlatInfo[] = [
     rules: [
       'Esce una parola italiana vera ma rarissima. Ognuno scrive una definizione inventata, credibile.',
       'Si vedono tutte insieme, con quella vera mescolata: votate quella che pensate sia giusta.',
-      '+2 se indovini la vera, +1 per ogni amico che vota la tua bugia.',
+      '+2 se indovini la vera, +1 per ogni amico che vota la tua bugia, +3 se scrivi proprio la definizione giusta.',
     ],
   },
   {
@@ -254,6 +254,7 @@ export const FLAT_GAMES: FlatInfo[] = [
       'Gioco di squadra in silenzio. Al livello 1 avete una carta a testa (da 1 a 100), al livello 2 due, e così via.',
       'Tutti insieme dovete giocare le carte in ordine crescente, senza dirvi niente: si gioca toccando, quando “sentite” che è il momento.',
       'Se qualcuno aveva una carta più bassa di quella giocata perdete una vita. Le stelline permettono di scartare la carta più bassa di tutti.',
+      'Se nessuno gioca per 90 secondi, la carta più bassa va in tavola da sola (e costa una vita).',
     ],
   },
   {

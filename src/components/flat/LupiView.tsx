@@ -94,6 +94,7 @@ function LupiStage({ state, clockOffset, canLead, onAction, onNewGame, onBackToL
   const left = useCountdown(q.stage === 'END' ? null : q.stageEndsAt, clockOffset);
   const [open, setOpen] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const [nope, setNope] = useState<string | null>(null);
   const inGame = q.order.includes(me);
   const alive = q.alive.includes(me);
   const dead = inGame && !alive;
@@ -110,7 +111,10 @@ function LupiStage({ state, clockOffset, canLead, onAction, onNewGame, onBackToL
   const tag = (id: string) => `${who(id).name}${id === me ? ' (tu)' : ''}`;
 
   // la carta si richiude a ogni fase (dal vivo non resta aperta sul tavolo)
-  useEffect(() => setOpen(false), [q.stage, q.n]);
+  useEffect(() => {
+    setOpen(false);
+    setNope(null);
+  }, [q.stage, q.n]);
   // suoni uguali per tutti i ruoli
   useEffect(() => {
     if (q.stage === 'ROLE') soundManager.playReveal();
@@ -137,47 +141,65 @@ function LupiStage({ state, clockOffset, canLead, onAction, onNewGame, onBackToL
   const wolvesLeft = (q.counts.LUPO ?? 0) - deadWolves;
   const mates = q.order.filter((id) => id !== me && q.roles[id] === 'LUPO');
 
-  // retro della carta: ruolo, obiettivo e quello che solo io so
+  // il resoconto della mia notte: solo dentro la carta (dal vivo non si legge da lontano)
+  const mine = q.myNight;
+  let report: string | null = null;
+  if (mine && q.victim === me) report = 'i lupi ti hanno sbranato.';
+  else if (mine?.role === 'LUPO') report = mine.killed ? `il branco ha sbranato ${who(mine.killed).name}.` : `il branco ha attaccato ${mine.target ? who(mine.target).name : 'qualcuno'}, ma è sopravvissuto!`;
+  else if (mine?.role === 'VEGGENTE') report = mine.target && mine.found ? `${who(mine.target).name} è ${withArticle(mine.found)} ${LUPI_ROLES[mine.found].emoji}` : 'niente visione.';
+  else if (mine?.role === 'MEDICO') report = mine.target ? (mine.saved ? `hai salvato ${who(mine.target).name} dai lupi!` : `hai protetto ${who(mine.target).name}.`) : 'non hai protetto nessuno.';
+  else if (mine?.role === 'CONTADINO') report = mine.target ? `sospettavi di ${who(mine.target).name}.` : 'nessun sospettato.';
+
+  // cosa fa la mia scelta di notte: anche questo solo nella carta, in piccolo
+  const nightHelp: Record<LupiRole, string> = {
+    LUPO: mates.length ? 'Di notte scegliete la vittima: vince la più votata dal branco (pari = a sorte). Non potete sceglervi tra voi.' : 'Di notte scegli tu la vittima.',
+    VEGGENTE: 'Di notte scegli di chi scoprire il ruolo: lo saprai all’alba, solo tu.',
+    MEDICO: `Di notte scegli chi proteggere: non te stesso, né la stessa persona due notti di fila${q.blocked ? ` (stanotte non ${who(q.blocked).name})` : ''}.`,
+    CONTADINO: 'Di notte scegli il tuo sospettato: non conta, ma a fine partita si vede chi aveva fiuto.',
+  };
+  const small = 'text-[11px] font-bold leading-snug text-slate-200';
+
+  // retro della carta: ruolo, obiettivo e tutto quello che solo io so
   const cardBack = (compact: boolean) => {
     if (!role) return null;
     const info = LUPI_ROLES[role];
-    return (
-      <div className={`flex h-full flex-col items-center justify-center text-center ${compact ? 'gap-0.5 p-3' : 'gap-1 p-5'}`}>
-        <p className="text-xs font-black uppercase tracking-widest text-amber-300">{dead ? 'Eri' : 'Sei'}</p>
-        <p className={compact ? 'text-4xl' : 'text-7xl'}>{info.emoji}</p>
-        <p className={`font-display leading-tight text-white ${compact ? 'text-2xl' : 'text-4xl'}`}>{info.name}</p>
-        {!compact && <p className="text-sm font-bold text-slate-100">{info.goal}</p>}
+    const pack = q.stage === 'NIGHT' && alive && role === 'LUPO' && q.pack ? Object.entries(q.pack) : [];
+    const lines = (
+      <>
         {role === 'LUPO' && (
-          <div className="mt-1 flex flex-wrap items-center justify-center gap-1.5 text-sm font-bold text-white">
-            {mates.length ? (
-              <>
-                <span className="text-slate-200">Il branco:</span>
-                {mates.map((id) => (
-                  <span key={id} className={`flex items-center gap-1 rounded-full bg-black/30 py-0.5 pl-0.5 pr-2 ${q.alive.includes(id) ? '' : 'line-through opacity-60'}`}>
-                    {face(id, 22)} {who(id).name}
-                  </span>
-                ))}
-              </>
-            ) : (
-              <span className="text-slate-200">Sei l’unico lupo: caccia da solo.</span>
-            )}
-          </div>
+          <p className={small}>
+            {mates.length ? `Il branco: ${mates.map((id) => who(id).name + (q.alive.includes(id) ? '' : ' 💀')).join(', ')}` : 'Sei l’unico lupo: caccia da solo.'}
+          </p>
         )}
-        {role === 'VEGGENTE' && (
-          <div className="mt-1 flex flex-wrap items-center justify-center gap-1.5 text-sm font-bold text-white">
-            {q.visions.length ? (
-              q.visions.slice(compact ? -4 : -8).map((v) => (
-                <span key={v.n} className="flex items-center gap-1 rounded-full bg-black/30 py-0.5 pl-0.5 pr-2">
-                  {face(v.id, 22)} {who(v.id).name} {LUPI_ROLES[v.role].emoji}
-                </span>
-              ))
-            ) : (
-              <span className="text-slate-200">Le visioni arrivano all’alba.</span>
-            )}
-          </div>
+        {role === 'VEGGENTE' && q.visions.length > 0 && (
+          <p className={small}>Visioni: {q.visions.slice(-5).map((v) => `${who(v.id).name} ${LUPI_ROLES[v.role].emoji}`).join(' · ')}</p>
         )}
-        {role === 'MEDICO' && <p className="mt-1 text-sm font-bold text-slate-200">{q.blocked ? `Ieri hai protetto ${who(q.blocked).name}: stanotte non puoi.` : 'Puoi proteggere chiunque, anche te.'}</p>}
-        {role === 'CONTADINO' && compact && <p className="mt-1 text-sm font-bold text-slate-200">Niente poteri: solo fiuto.</p>}
+        {alive && (!compact || q.stage === 'NIGHT') && <p className={small}>{nightHelp[role]}</p>}
+        {pack.length > 0 && (
+          <p className={small}>
+            Scelte del branco: {pack.map(([w, t]) => `${w === me ? 'tu' : who(w).name} → ${t ? who(t).name : '…'}${q.done.includes(w) ? ' ✓' : ''}`).join(' · ')}
+          </p>
+        )}
+        {report && (q.stage === 'DAWN' || q.stage === 'DAY') && <p className={`${small} text-amber-200`}>Stanotte: {report}</p>}
+      </>
+    );
+    if (compact)
+      return (
+        <div className="flex h-full flex-col items-center justify-center gap-1 px-3 py-2 text-center">
+          <p className="flex items-center gap-2 font-display text-2xl leading-tight text-white">
+            <span className="text-3xl">{info.emoji}</span>
+            {dead ? 'Eri' : 'Sei'} {info.name}
+          </p>
+          {lines}
+        </div>
+      );
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-1 p-5 text-center">
+        <p className="text-xs font-black uppercase tracking-widest text-amber-300">Sei</p>
+        <p className="text-7xl">{info.emoji}</p>
+        <p className="font-display text-4xl leading-tight text-white">{info.name}</p>
+        <p className="text-sm font-bold text-slate-100">{info.goal}</p>
+        {lines}
       </div>
     );
   };
@@ -406,62 +428,43 @@ function LupiStage({ state, clockOffset, canLead, onAction, onNewGame, onBackToL
   if (q.stage === 'NIGHT') {
     const iDone = q.done.includes(me);
     const aliveOnline = q.alive.filter((id) => who(id).online).length;
-    const hint: Record<LupiRole, string> = {
-      LUPO: mates.length ? 'Vince la scelta più votata dal branco (pari = a sorte).' : 'Sei l’unico lupo: decidi tu.',
-      VEGGENTE: 'Il suo ruolo ti arriva all’alba, solo a te.',
-      MEDICO: 'Se i lupi attaccano proprio lui, si salva.',
-      CONTADINO: 'Non conta, ma a fine partita si vede chi aveva fiuto.',
-    };
     return (
       <div className="stagger flex flex-col gap-4">
         {header(`🌙 Notte ${q.n}`)}
         {alive && role ? (
           <>
             <div className="text-center">
-              <h2 className="text-3xl text-white">{LUPI_ROLES[role].night}</h2>
-              <p className="mt-1 text-sm font-bold text-indigo-200">{hint[role]}</p>
+              <h2 className="text-3xl text-white">Notte {q.n} · scegli un giocatore</h2>
+              <p className="mt-1 text-sm font-bold text-indigo-200">Scelgono tutti, così nessuno si tradisce. Cosa fa la tua scelta lo dice la tua carta.</p>
             </div>
             <div className="grid grid-cols-3 gap-2">
               {q.alive.map((id, i) => {
-                const can = q.targets.includes(id);
                 const sel = q.myPick === id;
-                const known = q.roles[id];
-                const mateVotes = q.pack ? Object.entries(q.pack).filter(([w, t]) => w !== me && t === id) : [];
                 return (
                   <button
                     key={id}
                     type="button"
-                    disabled={!can}
+                    disabled={id === me}
                     onClick={() => {
-                      onAction('MG_PICK', { id });
                       haptic(15);
                       soundManager.playClick();
+                      // chi non si può scegliere (compagno di branco, protetto ieri) ha lo stesso aspetto: lo spiega la carta
+                      if (!q.targets.includes(id)) return setNope(id);
+                      setNope(null);
+                      onAction('MG_PICK', { id });
                     }}
                     style={{ animationDelay: `${0.04 * i}s` }}
-                    className={`pop relative flex flex-col items-center gap-1 rounded-2xl border-4 p-2 transition-colors ${
+                    className={`pop relative flex flex-col items-center gap-1 rounded-2xl border-4 p-2 transition-colors disabled:opacity-35 ${
                       sel ? 'border-amber-300 bg-amber-300/25' : 'border-white/15 bg-slate-900/85'
-                    } ${can ? '' : 'opacity-35'}`}
+                    }`}
                   >
                     {face(id, 44)}
                     <span className="w-full truncate text-center text-xs font-black text-white">{id === me ? 'Tu' : who(id).name}</span>
-                    {known && id !== me && <span className="absolute right-1 top-1 text-sm">{LUPI_ROLES[known].emoji}</span>}
                     {sel && <span className="absolute left-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-amber-300 text-slate-950"><Check size={13} strokeWidth={4} /></span>}
-                    {!!mateVotes.length && (
-                      <span className="flex -space-x-1.5">
-                        {mateVotes.map(([w]) => (
-                          <span key={w} className={q.done.includes(w) ? '' : 'opacity-60'}>
-                            {face(w, 20)}
-                          </span>
-                        ))}
-                      </span>
-                    )}
                   </button>
                 );
               })}
             </div>
-            {q.pack && mates.length > 0 && (
-              <p className="text-center text-xs font-bold text-slate-300">I visi piccoli sono le scelte del branco (sbiaditi = non ancora confermate).</p>
-            )}
             {card(true)}
           </>
         ) : (
@@ -504,8 +507,7 @@ function LupiStage({ state, clockOffset, canLead, onAction, onNewGame, onBackToL
               >
                 <span className="text-lg font-black leading-tight">{iDone ? 'Confermato ✓' : q.myPick ? `Conferma: ${who(q.myPick).name}` : 'Tocca un giocatore'}</span>
                 <span className="text-xs font-bold opacity-90">
-                  Hanno scelto {q.done.length}/{aliveOnline}
-                  {iDone ? ' · tocca un altro per cambiare' : ''}
+                  {nope ? `Non puoi scegliere ${who(nope).name}: guarda la carta` : `Hanno scelto ${q.done.length}/${aliveOnline}${iDone ? ' · tocca un altro per cambiare' : ''}`}
                 </span>
               </button>
             ) : (
@@ -521,14 +523,6 @@ function LupiStage({ state, clockOffset, canLead, onAction, onNewGame, onBackToL
   // ---------------------------------------------------------------- alba
   if (q.stage === 'DAWN') {
     const v = q.victim;
-    const mine = q.myNight;
-    let report: ReactNode = null;
-    if (mine && v === me) report = 'I lupi ti hanno sbranato 💀 Da ora vedi tutto, ma non puoi più votare né svelare niente!';
-    else if (mine?.role === 'LUPO') report = mine.killed ? `Il branco ha sbranato ${who(mine.killed).name}.` : `Il branco ha attaccato ${mine.target ? who(mine.target).name : 'qualcuno'}… ma è sopravvissuto!`;
-    else if (mine?.role === 'VEGGENTE')
-      report = mine.target && mine.found ? `La tua visione: ${who(mine.target).name} è ${withArticle(mine.found)} ${LUPI_ROLES[mine.found].emoji}` : 'Stanotte non hai scelto nessuno: niente visione.';
-    else if (mine?.role === 'MEDICO') report = mine.target ? (mine.saved ? `Hai salvato ${who(mine.target).name} dai lupi! 💪` : `Hai protetto ${who(mine.target).name}.`) : 'Stanotte non hai protetto nessuno.';
-    else if (mine?.role === 'CONTADINO') report = mine.target ? `Il tuo sospettato: ${who(mine.target).name}.` : 'Stanotte non hai sospettato di nessuno.';
     return (
       <div className="stagger flex flex-col gap-4">
         {header(`🌅 Alba ${q.n}`)}
@@ -563,11 +557,11 @@ function LupiStage({ state, clockOffset, canLead, onAction, onNewGame, onBackToL
             )}
           </section>
         )}
-        {report && revealed && (
-          <section className="pop rounded-3xl border-2 border-indigo-300/40 bg-slate-950/85 p-4 text-center">
-            <p className="text-xs font-black uppercase tracking-widest text-indigo-200">La tua notte (solo per te)</p>
-            <p className="mt-1 text-lg font-black text-white">{report}</p>
-          </section>
+        {alive && (
+          <>
+            <p className="text-center text-sm font-bold text-indigo-200">🃏 Com’è andata la tua notte? Guardalo nella tua carta, di nascosto!</p>
+            {card(true)}
+          </>
         )}
         {ghost}
         <BottomBar>

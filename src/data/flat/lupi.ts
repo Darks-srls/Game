@@ -3,14 +3,13 @@
 export type LupiRole = 'LUPO' | 'VEGGENTE' | 'MEDICO' | 'CONTADINO';
 export type LupiTeam = 'LUPI' | 'VILLAGGIO';
 
-export const LUPI_ROLES: Record<LupiRole, { name: string; emoji: string; team: LupiTeam; goal: string; night: string; article: string }> = {
+export const LUPI_ROLES: Record<LupiRole, { name: string; emoji: string; team: LupiTeam; goal: string; article: string }> = {
   LUPO: {
     name: 'Lupo mannaro',
     emoji: '🐺',
     team: 'LUPI',
     article: 'un',
     goal: 'Di notte sbrana un abitante insieme al branco. Di giorno fai l’innocente e accusa gli altri.',
-    night: 'Scegli la vittima del branco',
   },
   VEGGENTE: {
     name: 'Veggente',
@@ -18,15 +17,13 @@ export const LUPI_ROLES: Record<LupiRole, { name: string; emoji: string; team: L
     team: 'VILLAGGIO',
     article: 'la',
     goal: 'Ogni notte scopri il ruolo di un giocatore. Guida il villaggio… senza farti sbranare.',
-    night: 'Scegli di chi scoprire il ruolo',
   },
   MEDICO: {
     name: 'Medico',
     emoji: '💉',
     team: 'VILLAGGIO',
     article: 'il',
-    goal: 'Ogni notte proteggi un giocatore (anche te stesso): se i lupi attaccano lui, si salva. Mai lo stesso due notti di fila.',
-    night: 'Scegli chi proteggere stanotte',
+    goal: 'Ogni notte proteggi un altro giocatore: se i lupi attaccano lui, si salva. Mai lo stesso due notti di fila.',
   },
   CONTADINO: {
     name: 'Contadino',
@@ -34,7 +31,6 @@ export const LUPI_ROLES: Record<LupiRole, { name: string; emoji: string; team: L
     team: 'VILLAGGIO',
     article: 'un',
     goal: 'Niente poteri, solo fiuto: ascolta, smaschera i lupi e votali di giorno.',
-    night: 'Scegli il tuo sospettato',
   },
 };
 

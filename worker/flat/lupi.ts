@@ -53,12 +53,13 @@ export function wolvesFor(n: number, forced: number): number {
   return Math.max(1, Math.min(forced || auto, Math.floor((n - 2) / 2)));
 }
 
-// chi posso toccare di notte (i lupi non si mangiano tra loro, il medico non ripete la stessa persona)
+// chi posso toccare di notte: mai me stesso (così il riquadro "Tu" è spento per tutti i ruoli); i lupi non si mangiano
+// tra loro, il medico non ripete la stessa persona due notti di fila
 function targetsFor(s: LupiState, id: string): string[] {
   if (!s.alive.includes(id)) return [];
   const role = s.roles[id];
   if (role === 'LUPO') return s.alive.filter((x) => !isWolf(s, x));
-  if (role === 'MEDICO') return s.alive.filter((x) => x !== s.lastSaved);
+  if (role === 'MEDICO') return s.alive.filter((x) => x !== id && x !== s.lastSaved);
   return s.alive.filter((x) => x !== id);
 }
 
@@ -320,7 +321,7 @@ export const lupi: Mode<LupiState> = {
       pack,
       blocked: myRole === 'MEDICO' || seeAll ? s.lastSaved : null,
       victim: s.stage === 'DAWN' || s.stage === 'DAY' ? s.victim : null,
-      myNight: s.stage === 'DAWN' ? (s.reports[me] ?? null) : null,
+      myNight: s.stage === 'DAWN' || s.stage === 'DAY' ? (s.reports[me] ?? null) : null,
       visions: myRole === 'VEGGENTE' || seeAll ? s.visions : [],
       votes: s.stage === 'VOTE' || s.stage === 'VERDICT' ? s.votes : {},
       closing: s.closing,

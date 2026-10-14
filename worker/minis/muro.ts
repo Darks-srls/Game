@@ -5,6 +5,7 @@ import { registerServerMini } from './types';
 
 interface MuroState {
   seed: number;
+  outAt: Record<string, number>; // quando è caduto ognuno (chi cade insieme è pari merito)
 }
 
 const gauss = () => Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(2 * Math.PI * Math.random());
@@ -38,7 +39,7 @@ registerServerMini<MuroState>({
   init: () => {
     const seed = 1 + Math.floor(Math.random() * 2_000_000_000);
     setMuroSeed(seed);
-    return { seed };
+    return { seed, outAt: {} };
   },
   spawn: (_api, _id, i, n) => {
     // sparsi sulla teglia
@@ -77,13 +78,17 @@ registerServerMini<MuroState>({
             const speed = PHYS.speed * (0.85 + b.skill * 0.2) * 0.9;
             // tempo che ha: finché il muro lo raggiunge, più quello in cui il muro lo spinge fino al bordo
             const slack = th.tau + Math.max(0, MURO.half - 0.6 - (th.along + th.tau * w.v)) / w.v;
-            const sorted = [...holes].sort((p, q) => Math.abs(p - th.lat) - Math.abs(q - th.lat));
+            // (un buco già scelto da altri bot "costa" un po' di più: non si ammucchiano tutti nello stesso)
+            const crowd = (c: number) => api.bots.filter((o) => o !== b && api.alive(o.id) && o.mem.key === key && Math.abs((o.mem.aim ?? 99) - c) < 1).length * 1.5;
+            const sorted = [...holes].sort((p, q) => Math.abs(p - th.lat) + crowd(p) - Math.abs(q - th.lat) - crowd(q));
             let pick = sorted.find((c) => Math.abs(c - th.lat) / speed < slack) ?? sorted[0];
             if (sorted.length > 1 && Math.random() < 0.35 * (1 - b.skill)) pick = sorted[1];
-            m.aim = pick + gauss() * (1 - b.skill) * 0.75;
+            // (più va avanti, più si stancano: errori e indecisione crescono)
+            const tired = 1 + t / 120;
+            m.aim = pick + gauss() * (1 - b.skill) * 0.75 * tired;
             // un attimo per capire dove andare (i meno bravi ci mettono di più)
             // (il secondo muro del muro doppio lo aveva già visto arrivare)
-            m.react = api.now + (th.slab ? 0.08 + (1 - b.skill) * 0.3 : 0.12 + (1 - b.skill) * 0.75 + Math.random() * 0.25) * 1000;
+            m.react = api.now + (th.slab ? 0.08 + (1 - b.skill) * 0.3 : (0.15 + (1 - b.skill) * 0.95 + Math.random() * 0.3) * tired) * 1000;
           }
           // già schiacciato contro il muro accanto al buco: corregge la mira (i più bravi subito)
           if (th.tau >= 0.05) m.pressAt = 0;
@@ -129,7 +134,7 @@ registerServerMini<MuroState>({
       const dl = api.now < (m.react ?? 0) ? 0 : T.lat - lat;
       // di lato verso il buco; avanti/indietro: lontano dal bordo verso cui spinge il muro
       const da = along > MURO.half - 3.5 ? -1 : along < -MURO.half + 2 ? 0.5 : 0;
-      const sl = Math.max(-1, Math.min(1, dl * 1.6)) * (0.75 + b.skill * 0.25);
+      const sl = Math.max(-1, Math.min(1, dl * 1.6)) * (0.72 + b.skill * 0.28);
       let ix = D.lx * sl + D.fx * da;
       let iz = D.lz * sl + D.fz * da;
       const l = Math.hypot(ix, iz);
@@ -158,6 +163,23 @@ registerServerMini<MuroState>({
     if (Math.abs(me.x) > MURO.half - 1.2 || Math.abs(me.z) > MURO.half - 1.2) {
       if (!T) api.go(b, me.x * 0.5, me.z * 0.5);
     }
+  },
+  tick(api) {
+    for (const id of api.ids()) if (!api.alive(id) && api.ext.outAt[id] === undefined) api.ext.outAt[id] = api.now;
+    return false;
+  },
+  // classifica: chi è in piedi, poi chi è caduto dopo; chi cade nello stesso momento (stesso muro) è pari merito
+  rank: (api) => {
+    const E = api.ext;
+    for (const id of api.ids()) if (!api.alive(id) && E.outAt[id] === undefined) E.outAt[id] = api.now;
+    const groups: string[][] = [api.ids().filter((id) => api.alive(id))];
+    const out = api.ids().filter((id) => !api.alive(id)).sort((a, b) => E.outAt[b] - E.outAt[a]);
+    for (const id of out) {
+      const last = groups[groups.length - 1];
+      if (groups.length > 1 && last.length && Math.abs(E.outAt[last[0]] - E.outAt[id]) < 250) last.push(id);
+      else groups.push([id]);
+    }
+    return groups.filter((g) => g.length);
   },
   view: (api) => ({ seed: api.ext.seed }),
 });

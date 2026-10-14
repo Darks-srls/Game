@@ -13,3 +13,7 @@ import './uova';
 import './rubabandiera';
 import './avvelenata';
 import './pallavolo';
+import './mattarello';
+import './bilancia';
+import './muro';
+import './corda';

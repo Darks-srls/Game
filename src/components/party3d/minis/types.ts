@@ -29,6 +29,7 @@ export interface MiniFrame {
   me: Body; // il mio personaggio (si può spostare: es. una spinta locale)
   latest: Map<string, NetPos>; // ultime posizioni dal server: personaggi e oggetti (chiavi libere dei minigiochi, es. 'egg3')
   others: Map<string, OtherPos>; // gli altri personaggi, ammorbiditi
+  act: (type: string, payload?: unknown) => void; // azione al server (MG_...): es. "mi ha preso" visto dal mio telefono
 }
 
 // per scritte e pulsanti

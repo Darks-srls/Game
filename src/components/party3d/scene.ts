@@ -152,6 +152,7 @@ export interface ArenaInfo {
   body?: Body;
   latest?: Map<string, NetPos>;
   others?: Map<string, OtherPos>;
+  act?: (type: string, payload?: unknown) => void;
 }
 
 export function createWorld(canvas: HTMLCanvasElement, lowPower: boolean): World {
@@ -490,6 +491,7 @@ export function buildArena(world: World, kind: MiniKind) {
         me: info.body,
         latest: info.latest ?? new Map(),
         others: info.others ?? new Map(),
+        act: info.act ?? (() => {}),
       };
       frameFn(f);
     };

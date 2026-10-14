@@ -171,6 +171,14 @@ registerMini({
         const d = along - s;
         if (d >= lim || d <= -lim) continue;
         const holes = slab ? w.holes2 : w.holes;
+        // contro la lasagna si scivola di lato piano (anche verso il buco)
+        const id = k * 2 + slab;
+        const pr = PRESS.get(p);
+        if (pr && pr.k === id && t > pr.t && t - pr.t < 0.25) {
+          const mx = MURO.slideV * (t - pr.t);
+          if (lat > pr.lat + mx) lat = pr.lat + mx;
+          else if (lat < pr.lat - mx) lat = pr.lat - mx;
+        }
         let inHole = false;
         for (let h = 0; h < holes.length; h++) {
           const dl = lat - holes[h];
@@ -183,15 +191,9 @@ registerMini({
           }
         }
         if (!inHole) {
-          along = d >= 0 ? s + lim : s - lim;
-          // contro la lasagna si scivola di lato piano
-          const id = k * 2 + slab;
-          const pr = PRESS.get(p);
-          if (pr && pr.k === id && t > pr.t && t - pr.t < 0.25) {
-            const mx = MURO.slideV * (t - pr.t);
-            if (lat > pr.lat + mx) lat = pr.lat + mx;
-            else if (lat < pr.lat - mx) lat = pr.lat - mx;
-          }
+          // il muro va avanti: chi è appena dietro la sua metà ci è arrivato da davanti (a 15 passi al secondo
+          // un muro veloce contro uno che gli corre incontro fa più di un metro per passo: niente attraversamenti)
+          along = d >= -0.45 ? s + lim : s - lim;
           if (pr) {
             pr.k = id;
             pr.lat = lat;

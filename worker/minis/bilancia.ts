@@ -146,20 +146,20 @@ registerServerMini<BilState>({
       }
       api.emit({ k: 'bil_slam', a: E.slam.a });
       E.slam = null;
-      E.nextSlam = api.now + (Math.max(4.5, 9 - t * 0.06) + api.rand(0, 2)) * 1000;
+      E.nextSlam = api.now + (Math.max(3.8, 9 - t * 0.07) + api.rand(0, 2)) * 1000;
       changed = true;
     }
 
     // ---- polpette: cadono dall'alto, sbattono sul piatto, rotolano giù
     if (api.now >= E.nextBall) {
       const live = E.balls.length;
-      const max = t > 50 ? 5 : 4;
+      const max = t > 60 ? 6 : t > 40 ? 5 : 4;
       if (live < max) {
         spawnBall(api);
         if (t > 55 && live + 1 < max && Math.random() < 0.35) spawnBall(api);
         changed = true;
       }
-      E.nextBall = api.now + Math.max(2000, 5000 - t * 40) + api.rand(0, 1200);
+      E.nextBall = api.now + Math.max(1500, 5000 - t * 45) + api.rand(0, 1200);
     }
     for (const b of E.balls) {
       if (!b.on) {
@@ -272,7 +272,9 @@ registerServerMini<BilState>({
     const tl = Math.hypot(m.tx, m.tz);
     // distratto: per un attimo non fa niente (e scivola)
     if (api.now < (m.daze ?? 0)) return;
-    if (Math.random() < 0.007 * (1 - b.skill) + 0.0015) {
+    // (più va avanti, più si stancano)
+    const tired = 1 + api.t / 60;
+    if (Math.random() < (0.007 * (1 - b.skill) + 0.0015) * tired) {
       m.daze = api.now + api.rand(500, 1500);
       return;
     }
@@ -313,7 +315,7 @@ registerServerMini<BilState>({
       m.goal = { x: ux * up * (1 - smart) + bx * smart + m.off.x, z: uz * up * (1 - smart) + bz * smart + m.off.z };
       // polpette: scappa da quelle che stanno per cadere vicino o che rotolano verso di lui
       m.flee = null;
-      if (Math.random() < 0.12 + b.skill * b.skill * 0.85)
+      if (Math.random() < (0.12 + b.skill * b.skill * 0.85) / tired)
         for (const ball of E.balls) {
           const land = ball.sky;
           const fx = land ? ball.x : ball.x + ball.vx * 0.6;
@@ -338,7 +340,7 @@ registerServerMini<BilState>({
     }
     let goal = m.flee ?? m.goal;
     // la ciabattata in arrivo: via da lì (e i più bravi si spostano già dall'altra parte)
-    if (E.slam && Math.random() < 0.2 + b.skill * 0.8) {
+    if (E.slam && Math.random() < (0.2 + b.skill * 0.8) / Math.sqrt(tired)) {
       const sx = Math.sin(E.slam.a) * BIL.r;
       const sz = Math.cos(E.slam.a) * BIL.r;
       if (Math.hypot(me.x - sx, me.z - sz) < BIL.slamR + 3.5) goal = { x: -sx * 0.25, z: -sz * 0.25 };

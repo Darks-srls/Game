@@ -886,7 +886,7 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
         const input = isAlive && !menuRef.current ? { x: -fz * jx + fx * jf, z: fx * jx + fz * jf, jump: jumpQ.current, dash: dashQ.current } : { x: 0, z: 0, jump: false };
         jumpQ.current = false;
         dashQ.current = false;
-        const cmSpeed = cm?.speed ? cm.speed({ t, dt, playT, now: nowS, view: s, ext: s.ext, myId, me: body, latest: rtLink.current?.p3.current.p ?? new Map(), others: others.current }) : 1;
+        const cmSpeed = cm?.speed ? cm.speed({ t, dt, playT, now: nowS, view: s, ext: s.ext, myId, me: body, latest: rtLink.current?.p3.current.p ?? new Map(), others: others.current, act: (ty, p) => actRef.current(ty, p) }) : 1;
         if (body.y > -40) stepBody(body, input, dt, s.kind, playT, (holdingHen ? YARD.holderSpeed : holdingBomb ? PLAZA.holderSpeed : 1) * cmSpeed);
         // telecamera "che segue": quando giri, la visuale ti viene dietro da sola (non se stai tornando indietro
         // e non mentre la stai girando tu col dito)
@@ -969,7 +969,7 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
       // ---- gli altri
       const latest = rtLink.current?.p3.current.p ?? new Map<string, NetPos>();
       const rosterIds = new Set(s.roster.map((r) => r.id));
-      const mf: MiniFrame | null = cm ? { t, dt, playT, now: nowS, view: s, ext: s.ext, myId, me: body, latest, others: others.current } : null;
+      const mf: MiniFrame | null = cm ? { t, dt, playT, now: nowS, view: s, ext: s.ext, myId, me: body, latest, others: others.current, act: (ty, p) => actRef.current(ty, p) } : null;
       for (const [id, p] of latest) {
         // solo i personaggi (la gallina e il pallone si disegnano a parte)
         if (id === myId || !rosterIds.has(id)) continue;
@@ -1200,6 +1200,7 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
         body,
         latest,
         others: others.current,
+        act: (ty, p) => actRef.current(ty, p),
       });
       updateFx(world, dt);
       world.render(dt);

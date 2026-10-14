@@ -161,6 +161,11 @@ export function useGameSocket() {
         setGameState(state);
         const board = (state.mg as { board?: BoardInfo } | null)?.board;
         if (board) syncBoard(socket, board);
+        else if (boardRef.current.id !== -1) {
+          // niente foglio (stanza o altro gioco): via il disegno vecchio, così la prossima partita parte pulita
+          boardRef.current = { id: -1, ops: [], syncing: 0 };
+          setBoardVersion((v) => v + 1);
+        }
       } else if (type === 'P3_POS') {
         p3Ref.current = {
           at: Date.now(),

@@ -1,4 +1,8 @@
 import { X } from 'lucide-react';
+import { FLAT_GAMES } from '../data/flatGames';
+import { FLAT_VIEWS } from './flat';
+import { MINIGAMES, MINIS } from '../data/party3d';
+import '../data/minis'; // registra le regole dei minigiochi a moduli
 
 export default function RulesModal({ onClose }: { onClose: () => void }) {
   return (
@@ -134,6 +138,34 @@ export default function RulesModal({ onClose }: { onClose: () => void }) {
 
 
 
+
+        {/* minigiochi nuovi di Axend Party (a moduli) */}
+        {Object.values(MINIS).length > 0 && (
+          <>
+            <h3 className="mb-2 mt-6 text-xl text-amber-300">🎉 Axend Party: i minigiochi nuovi</h3>
+            <ul className="flex list-disc flex-col gap-3 pl-5 font-semibold text-slate-200">
+              {Object.values(MINIS).map((m) => (
+                <li key={m!.kind}>
+                  <b className="text-amber-300">{MINIGAMES[m!.kind].name}</b> — {MINIGAMES[m!.kind].rules}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+
+        {/* giochi flat a moduli */}
+        {FLAT_GAMES.filter((g) => FLAT_VIEWS[g.id]).map((g) => (
+          <div key={g.id}>
+            <h3 className="mb-2 mt-6 text-xl text-amber-300">
+              {g.emoji} {g.name}
+            </h3>
+            <ol className="flex list-decimal flex-col gap-3 pl-5 font-semibold text-slate-200">
+              {g.rules.map((r, i) => (
+                <li key={i}>{r}</li>
+              ))}
+            </ol>
+          </div>
+        ))}
 
         <h3 className="mb-2 mt-6 text-xl text-amber-300">🌍 Stanze, 🌶️ e dal vivo</h3>
         <ul className="flex list-disc flex-col gap-3 pl-5 font-semibold text-slate-200">

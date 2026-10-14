@@ -3,6 +3,7 @@ import { Crown, Share2, UserPlus, X } from 'lucide-react';
 import type { BombaMode, ClientGameState, GameSettings } from '../types/game';
 import { CATEGORY_ICONS, DEFAULT_LOCATIONS, LOCATION_CATEGORIES } from '../data/locations';
 import { Art, Avatar, BottomBar, GAMES, NewBadge, Segmented, shareRoom } from './ui';
+import { flatInfo, flatOpt, type FlatId } from '../data/flatGames';
 
 const TIMES: [number, string][] = [[180, '3'], [300, '5'], [480, '8'], [600, '10'], [0, '∞']];
 const DRAW_TIMES: [number, string][] = [[60, '60s'], [90, '90s'], [120, '2 min'], [0, '∞']];
@@ -96,8 +97,14 @@ export default function LobbyView({ state, onUpdateSettings, onStart, onKick }: 
   const online = state.players.filter((p) => p.isOnline).length;
   // Axend Party: i bot contano come giocatori
   const horror = state.settings.game === 'HORROR1';
-  const ready = horror ? online >= 1 && online <= 8 : state.settings.game === 'PARTY3D' ? online >= 1 && online + state.settings.partyBots >= 3 : online >= 3;
-  const needed = horror ? 0 : state.settings.game === 'PARTY3D' ? Math.max(0, 3 - online - state.settings.partyBots) : 3 - online;
+  const flat = flatInfo(state.settings.game); // giochi flat a moduli: minimo e massimo di giocatori loro
+  const minPlayers = flat?.min ?? 3;
+  const ready = horror
+    ? online >= 1 && online <= 8
+    : state.settings.game === 'PARTY3D'
+      ? online >= 1 && online + state.settings.partyBots >= 3
+      : online >= minPlayers && (!flat?.max || online <= flat.max);
+  const needed = horror ? 0 : state.settings.game === 'PARTY3D' ? Math.max(0, 3 - online - state.settings.partyBots) : minPlayers - online;
   const selectedCount = DEFAULT_LOCATIONS.filter((l) => s.selectedCategories.includes(l.category)).length;
   const locked = !isHost;
   const current = GAMES.find((g) => g.id === s.game) ?? GAMES[0];
@@ -429,6 +436,23 @@ export default function LobbyView({ state, onUpdateSettings, onStart, onKick }: 
             </Setting>
           </>
         )}
+        {flat && (
+          <>
+            {flat.options.map((o) => (
+              <Setting key={o.key} label={o.label}>
+                <Segmented
+                  options={o.values}
+                  value={flatOpt(s, flat.id as FlatId, o.key)}
+                  disabled={locked}
+                  onChange={(v) => onUpdateSettings({ extra: { [o.key]: v } })}
+                />
+              </Setting>
+            ))}
+            <p className="text-xs font-semibold text-slate-400">
+              {flat.max ? `Da ${flat.min} a ${flat.max} giocatori.` : `Almeno ${flat.min} ${flat.min === 1 ? 'giocatore' : 'giocatori'}.`} Le regole sono nel libretto in alto.
+            </p>
+          </>
+        )}
         {s.game === 'SPIA' && (
           <>
             <Setting label="⏱️ Minuti per round">
@@ -472,7 +496,13 @@ export default function LobbyView({ state, onUpdateSettings, onStart, onKick }: 
                 disabled={!ready}
                 className={`h-16 w-full rounded-2xl bg-amber-400 text-xl font-black text-slate-950 disabled:opacity-60 ${ready ? 'shine' : ''}`}
               >
-                {!ready ? (state.settings.game === 'PARTY3D' ? `Aggiungi ${needed} bot o giocatori` : `Servono 3 giocatori (${online}/3)`) : 'Avvia la partita'}
+                {!ready
+                  ? state.settings.game === 'PARTY3D'
+                    ? `Aggiungi ${needed} bot o giocatori`
+                    : flat?.max && online > flat.max
+                      ? `Massimo ${flat.max} giocatori (${online})`
+                      : `Servono ${minPlayers} giocatori (${online}/${minPlayers})`
+                  : 'Avvia la partita'}
               </button>
             </div>
             {!isHost && <p className="text-center text-xs font-bold text-slate-200">{host?.name} è offline: puoi avviare tu.</p>}

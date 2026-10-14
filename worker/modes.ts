@@ -353,7 +353,8 @@ export const disegna: Mode<DisegnaState> = {
       guessed: [],
       feed: [],
       lastGuess: {},
-      board: { id: 0, ops: [] },
+      // numero del foglio unico per ogni partita: se ripartisse da 0 il telefono terrebbe il disegno della partita prima
+      board: { id: ctx.now, ops: [] },
       words: wordPool(settings),
       used: [],
     };
@@ -525,7 +526,7 @@ export const artista: Mode<ArtistaState> = {
       turn: 0,
       stage: 'DRAW',
       turnEndsAt: ctx.now + TURN_MS,
-      board: { id: 1, ops: [] },
+      board: { id: ctx.now, ops: [] }, // unico per ogni partita (vedi Disegna)
       confirmations: [],
       strokeG: null,
     };

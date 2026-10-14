@@ -20,6 +20,7 @@ import SintoniaView from './components/SintoniaView';
 import StartSplash from './components/StartSplash';
 import TabuView from './components/TabuView';
 import TelefonoView from './components/TelefonoView';
+import { FLAT_VIEWS } from './components/flat';
 import { Art, type ModeProps } from './components/ui';
 import { clearSession, loadSession, useGameSocket } from './hooks/useGameSocket';
 import type { GameId } from './types/game';
@@ -46,6 +47,7 @@ const MODE_VIEWS: Partial<Record<GameId, ComponentType<ModeProps>>> = {
   ASTRO: AstroView,
   PARTY3D: PartyView as unknown as ComponentType<ModeProps>,
   HORROR1: HorrorView as unknown as ComponentType<ModeProps>,
+  ...FLAT_VIEWS, // giochi flat a moduli
 };
 
 // Scintille dello sfondo: posizioni fisse, così non saltano a ogni aggiornamento
@@ -196,7 +198,7 @@ export default function App() {
       // Giochi a moduli: tutti tranne Spia, Impostore e Telefono
       const artista = state.settings.game === 'ARTISTA';
       view = (
-        <Suspense fallback={<p className="py-20 text-center font-display text-2xl text-white">Carico il mondo 3D… 🎉</p>}>
+        <Suspense fallback={<p className="py-20 text-center font-display text-2xl text-white">{state.settings.game === 'PARTY3D' || state.settings.game === 'HORROR1' ? 'Carico il mondo 3D… 🎉' : 'Carico il gioco… 🎲'}</p>}>
         <Mode
           key={state.currentRound}
           state={state}

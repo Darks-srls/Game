@@ -60,23 +60,26 @@ import {
   type MiniKind,
 } from '../../data/party3d';
 import type { PartyView } from '../../types/game';
+import type { NetPos } from '../../data/party3d';
+import { CLIENT_MINIS, type MiniFrame, type OtherPos } from './minis/types';
+import type { Body } from '../../data/party3d';
 
 // ---------------------------------------------------------------- materiali
 
 // plastica lucida (personaggi, oggetti)
-const toy = (color: THREE.ColorRepresentation, extra: THREE.MeshPhysicalMaterialParameters = {}) =>
+export const toy = (color: THREE.ColorRepresentation, extra: THREE.MeshPhysicalMaterialParameters = {}) =>
   new THREE.MeshPhysicalMaterial({ color, roughness: 0.42, metalness: 0, clearcoat: 0.45, clearcoatRoughness: 0.3, ...extra });
 // opaco (pavimenti, muri)
-const matte = (color: THREE.ColorRepresentation, extra: THREE.MeshStandardMaterialParameters = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.75, metalness: 0, ...extra });
-const glow = (color: THREE.ColorRepresentation, intensity = 2) => new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: intensity, roughness: 0.4 });
-const rbox = (w: number, h: number, d: number, r = 0.08) => new RoundedBoxGeometry(w, h, d, 4, Math.min(r, w / 2 - 0.001, h / 2 - 0.001, d / 2 - 0.001));
+export const matte = (color: THREE.ColorRepresentation, extra: THREE.MeshStandardMaterialParameters = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.75, metalness: 0, ...extra });
+export const glow = (color: THREE.ColorRepresentation, intensity = 2) => new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: intensity, roughness: 0.4 });
+export const rbox = (w: number, h: number, d: number, r = 0.08) => new RoundedBoxGeometry(w, h, d, 4, Math.min(r, w / 2 - 0.001, h / 2 - 0.001, d / 2 - 0.001));
 const OUTLINE = new THREE.MeshBasicMaterial({ color: '#1d0f3d', side: THREE.BackSide });
 
-function shade(hex: string, k: number) {
+export function shade(hex: string, k: number) {
   return new THREE.Color(hex).multiplyScalar(k);
 }
 
-function canvasTex(w: number, h: number, draw: (g: CanvasRenderingContext2D) => void, repeat?: [number, number]) {
+export function canvasTex(w: number, h: number, draw: (g: CanvasRenderingContext2D) => void, repeat?: [number, number]) {
   const cv = document.createElement('canvas');
   cv.width = w;
   cv.height = h;
@@ -91,7 +94,7 @@ function canvasTex(w: number, h: number, draw: (g: CanvasRenderingContext2D) => 
   return t;
 }
 
-const shadowy = <T extends THREE.Object3D>(o: T, cast = true, receive = true) => {
+export const shadowy = <T extends THREE.Object3D>(o: T, cast = true, receive = true) => {
   o.traverse((x) => {
     if ((x as THREE.Mesh).isMesh && (x as THREE.Mesh).material !== OUTLINE) {
       x.castShadow = cast;
@@ -102,7 +105,7 @@ const shadowy = <T extends THREE.Object3D>(o: T, cast = true, receive = true) =>
 };
 
 // contorno cartoon: una copia leggermente più grande, girata al rovescio e scura
-function outlined(mesh: THREE.Mesh, k = 1.06) {
+export function outlined(mesh: THREE.Mesh, k = 1.06) {
   const o = new THREE.Mesh(mesh.geometry, OUTLINE);
   o.scale.setScalar(k);
   mesh.add(o);
@@ -142,6 +145,12 @@ export interface ArenaInfo {
   score: [number, number] | null;
   doors: string[];
   me: { x: number; y: number; z: number };
+  // minigiochi a moduli
+  view?: PartyView;
+  myId?: string;
+  body?: Body;
+  latest?: Map<string, NetPos>;
+  others?: Map<string, OtherPos>;
 }
 
 export function createWorld(canvas: HTMLCanvasElement, lowPower: boolean): World {
@@ -355,7 +364,7 @@ function backdrop() {
   return g;
 }
 
-function clearGroup(g: THREE.Group) {
+export function clearGroup(g: THREE.Group) {
   for (const c of [...g.children]) {
     g.remove(c);
     c.traverse((o) => {
@@ -367,7 +376,7 @@ function clearGroup(g: THREE.Group) {
 
 // ---------------------------------------------------------------- pezzi decorativi
 
-function balloon(color: string) {
+export function balloon(color: string) {
   const g = new THREE.Group();
   const b = new THREE.Mesh(new THREE.SphereGeometry(0.9, 24, 18), toy(color));
   b.scale.y = 1.2;
@@ -380,7 +389,7 @@ function balloon(color: string) {
   return g;
 }
 
-function flagLine(from: THREE.Vector3, to: THREE.Vector3, n = 14) {
+export function flagLine(from: THREE.Vector3, to: THREE.Vector3, n = 14) {
   const g = new THREE.Group();
   const cols = ['#ff4d6d', '#ffd60a', '#3a86ff', '#06d6a0', '#ff70a6', '#fb5607'];
   const geo = new THREE.ConeGeometry(0.35, 0.7, 3);
@@ -397,7 +406,7 @@ function flagLine(from: THREE.Vector3, to: THREE.Vector3, n = 14) {
 }
 
 // arco del traguardo con lo striscione a scacchi
-function finishArch(width: number, z: number) {
+export function finishArch(width: number, z: number) {
   const g = new THREE.Group();
   const pillar = toy('#ff4d6d');
   for (const x of [-width / 2, width / 2]) {
@@ -455,6 +464,34 @@ export function buildArena(world: World, kind: MiniKind) {
   const g = world.arena;
   clearGroup(g);
   world.pickables = [];
+  const ext = CLIENT_MINIS[kind as keyof typeof CLIENT_MINIS];
+  if (ext) {
+    // minigioco a moduli: costruisce tutto lui
+    const sh0 = world.sun.shadow.camera;
+    sh0.left = sh0.bottom = -18;
+    sh0.right = sh0.top = 18;
+    world.sun.target.position.set(0, 0, 0);
+    world.sun.position.copy(world.sun.target.position).add(new THREE.Vector3(20, 34, 26));
+    const frameFn = ext.build(world);
+    sh0.updateProjectionMatrix();
+    world.update = (t, dt, info) => {
+      if (!info.view || !info.body) return;
+      const f: MiniFrame = {
+        t,
+        dt,
+        playT: info.playT,
+        now: info.now,
+        view: info.view,
+        ext: info.view.ext,
+        myId: info.myId ?? '',
+        me: info.body,
+        latest: info.latest ?? new Map(),
+        others: info.others ?? new Map(),
+      };
+      frameFn(f);
+    };
+    return;
+  }
   let update: World['update'] = () => {};
   const sh = world.sun.shadow.camera;
   const balloons: THREE.Group[] = [];
@@ -3128,6 +3165,8 @@ export interface Avatar {
   expr: string;
   shockUntil: number; // faccia spaventata dopo una spinta
   ring: THREE.Mesh; // anello colorato per terra (squadra del calcetto)
+  deco: THREE.Group; // minigiochi a moduli: decorazioni attaccate al personaggio (si svuota a ogni minigioco)
+  headDeco: THREE.Group; // … e alla testa
 }
 
 const faceTex = (() => {
@@ -3377,7 +3416,11 @@ export function makeAvatar(id: string, color: string, name: string, me: boolean)
   ring.position.y = 0.05;
   ring.visible = false;
   root.add(ring);
-  return { root, body, legL, legR, armL, armR, head, label, squash: 1, wasAir: false, phase: Math.random() * 10, dustAt: 0, face, expr: 'happy', shockUntil: 0, ring };
+  const deco = new THREE.Group();
+  root.add(deco);
+  const headDeco = new THREE.Group();
+  head.add(headDeco);
+  return { root, body, legL, legR, armL, armR, head, label, squash: 1, wasAir: false, phase: Math.random() * 10, dustAt: 0, face, expr: 'happy', shockUntil: 0, ring, deco, headDeco };
 }
 
 // Animazioni (camminata, salto, seduto, caduta, balletto, spinta) con schiacciamento elastico

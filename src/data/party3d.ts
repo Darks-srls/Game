@@ -2,9 +2,41 @@
 // (il server le usa per i bot e per controllare cadute, spinte e colpi).
 // Mondo in metri: y verso l'alto, i giocatori corrono verso +z.
 
-export type MiniKind = 'SUMO' | 'REDLIGHT' | 'CHAIRS' | 'SNIPER' | 'POLPETTE' | 'NONNA' | 'GALLINA' | 'PONTE' | 'BOTTO' | 'DENTE' | 'WAFER' | 'FRUTTA' | 'CALCIO' | 'POMODORI' | 'CORSA';
+export type BaseKind = 'SUMO' | 'REDLIGHT' | 'CHAIRS' | 'SNIPER' | 'POLPETTE' | 'NONNA' | 'GALLINA' | 'PONTE' | 'BOTTO' | 'DENTE' | 'WAFER' | 'FRUTTA' | 'CALCIO' | 'POMODORI' | 'CORSA';
+// minigiochi "a moduli": ognuno nel suo file (src/data/minis, worker/minis, src/components/party3d/minis)
+export type ExtKind =
+  | 'RUBACODA'
+  | 'RE'
+  | 'ANELLI'
+  | 'MATTARELLO'
+  | 'MURO'
+  | 'UOVA'
+  | 'SUGO'
+  | 'AUTOSCONTRO'
+  | 'PITTURA'
+  | 'RUBABANDIERA'
+  | 'NASCONDINO'
+  | 'SIMON'
+  | 'AVVELENATA'
+  | 'MONETE'
+  | 'TALPE'
+  | 'BILANCIA'
+  | 'SPAGHETTO'
+  | 'PALLAVOLO'
+  | 'CORDA'
+  | 'PIZZE';
+export type MiniKind = BaseKind | ExtKind;
 
-export const MINIGAMES: Record<MiniKind, { name: string; tag: string; rules: string; seconds: number }> = {
+export interface MiniInfo {
+  name: string;
+  tag: string;
+  rules: string;
+  seconds: number; // 0 = finisce da solo (eliminazione)
+}
+
+// (si completa con i minigiochi a moduli quando si registrano: vedi registerMini)
+export const MINIGAMES = {} as Record<MiniKind, MiniInfo>;
+const BASE_MINIGAMES: Record<BaseKind, MiniInfo> = {
   SUMO: {
     name: 'Spingi giù',
     tag: 'Tutti contro tutti',
@@ -96,10 +128,38 @@ export const MINIGAMES: Record<MiniKind, { name: string; tag: string; rules: str
     seconds: 100,
   },
 };
-export const MINI_KINDS = Object.keys(MINIGAMES) as MiniKind[];
+Object.assign(MINIGAMES, BASE_MINIGAMES);
+// tutti i minigiochi giocabili (quelli a moduli ci sono solo se il loro file è stato caricato)
+export const miniKinds = () => Object.keys(MINIGAMES) as MiniKind[];
+
+// ---------------------------------------------------------------- minigiochi a moduli
+// Ogni minigioco nuovo ha un file in src/data/minis/ con le regole fisiche della sua arena
+// (uguali per il telefono e per il server) e si registra qui.
+export interface SharedMini extends MiniInfo {
+  kind: ExtKind;
+  speed?: number; // velocità di corsa (1 = normale)
+  grip?: number; // aderenza: senza, a terra si cambia direzione all'istante; con un numero (es. 2.5) si scivola (ghiaccio, autoscontro)
+  noPush?: boolean; // niente schiaffo
+  noDash?: boolean; // niente scatto/tuffo
+  noDoubleJump?: boolean;
+  noJump?: boolean; // niente salto
+  autoRun?: boolean; // si corre sempre in avanti (il joystick gira soltanto): es. lo spaghetto alla Tron
+  fallOut?: number; // sotto questa quota sei caduto (di solito PHYS.fallOut)
+  // quota del pavimento sotto (x, z): null = vuoto. y = quota da cui si arriva (per i piani sovrapposti). Senza: pavimento piatto a 0 ovunque
+  ground?: (x: number, z: number, t: number, y?: number) => number | null;
+  clamp?: (p: { x: number; z: number; y?: number }, t: number) => void; // pareti e ostacoli: sposta p fuori
+  groundVel?: (x: number, z: number, t: number) => { x: number; z: number }; // pavimento che trascina (nastri, piattaforme mobili)
+  sync?: (ext: any) => void; // stato dell'arena che cambia (mattonelle, porte…): arriva da PartyView.ext (telefono) o dallo stato del server
+}
+export const MINIS: Partial<Record<MiniKind, SharedMini>> = {};
+export function registerMini(m: SharedMini) {
+  MINIS[m.kind] = m;
+  MINIGAMES[m.kind] = { name: m.name, tag: m.tag, rules: m.rules, seconds: m.seconds };
+}
+
 // velocità di corsa per minigioco (a Luce rossa si va più piano: servono più semafori per arrivare)
 // (a Pasta al dente non si cammina: si sta in fila davanti alla pentola)
-export const KIND_SPEED: Record<MiniKind, number> = {
+const KIND_SPEED: Record<BaseKind, number> = {
   SUMO: 1,
   REDLIGHT: 0.62,
   CHAIRS: 1,
@@ -116,9 +176,13 @@ export const KIND_SPEED: Record<MiniKind, number> = {
   POMODORI: 0.95,
   CORSA: 1,
 };
+export const speedOf = (kind: MiniKind) => KIND_SPEED[kind as BaseKind] ?? MINIS[kind]?.speed ?? 1;
 // qui non si spinge e non si scatta
-export const NO_PUSH: MiniKind[] = ['DENTE'];
-export const NO_DASH: MiniKind[] = ['PONTE', 'DENTE'];
+const NO_PUSH: MiniKind[] = ['DENTE'];
+const NO_DASH: MiniKind[] = ['PONTE', 'DENTE'];
+export const noPush = (kind: MiniKind) => NO_PUSH.includes(kind) || !!MINIS[kind]?.noPush;
+export const noDash = (kind: MiniKind) => NO_DASH.includes(kind) || !!MINIS[kind]?.noDash;
+export const noDoubleJump = (kind: MiniKind) => kind === 'PONTE' || !!MINIS[kind]?.noDoubleJump;
 
 export const PHYS = {
   speed: 7.2, // metri al secondo
@@ -353,11 +417,13 @@ export function platAt(x: number, z: number, t: number) {
   return -1;
 }
 // a che quota si cade fuori (sotto l'ultimo piano di wafer si va più giù)
-export const fallOutOf = (kind: MiniKind) => (kind === 'WAFER' ? WAFER.fallOut : PHYS.fallOut);
+export const fallOutOf = (kind: MiniKind) => (kind === 'WAFER' ? WAFER.fallOut : (MINIS[kind]?.fallOut ?? PHYS.fallOut));
 
 // Quota del pavimento sotto (x, z): null = vuoto (si cade)
 // (y = quota da cui si arriva: serve al wafer per sapere su che piano si atterra)
 export function groundAt(kind: MiniKind, x: number, z: number, t: number, y?: number): number | null {
+  const ext = MINIS[kind];
+  if (ext) return ext.ground ? ext.ground(x, z, t, y) : 0;
   if (kind === 'SUMO') return Math.hypot(x, z) <= sumoRadius(t) ? 0 : null;
   if (kind === 'NONNA') return Math.hypot(x, z) <= TABLE.r ? 0 : null;
   if (kind === 'POLPETTE') return Math.abs(x) <= SLOPE.halfW ? slopeHeight(z) : null;
@@ -395,16 +461,20 @@ export function groundAt(kind: MiniKind, x: number, z: number, t: number, y?: nu
 }
 
 // velocità del pavimento sotto i piedi (le piattaforme mobili della corsa ti portano con sé)
-export function groundVelX(kind: MiniKind, x: number, z: number, t: number) {
-  if (kind !== 'CORSA') return 0;
+export function groundVel(kind: MiniKind, x: number, z: number, t: number): { x: number; z: number } {
+  const ext = MINIS[kind];
+  if (ext) return ext.groundVel ? ext.groundVel(x, z, t) : { x: 0, z: 0 };
+  if (kind !== 'CORSA') return { x: 0, z: 0 };
   const i = platAt(x, z, t);
-  return i >= 0 ? platVX(i, t) : 0;
+  return { x: i >= 0 ? platVX(i, t) : 0, z: 0 };
 }
 
 // Pareti: tengono i personaggi dentro l'arena (e fuori dalle casse)
-export function clampArena(kind: MiniKind, p: { x: number; z: number; y?: number }) {
+export function clampArena(kind: MiniKind, p: { x: number; z: number; y?: number }, t = 0) {
   const r = PHYS.radius;
-  if (kind === 'CALCIO') {
+  const ext = MINIS[kind];
+  if (ext) ext.clamp?.(p, t);
+  else if (kind === 'CALCIO') {
     // dentro la porta ci si può infilare (il portiere), ai lati c'è la sponda
     if (Math.abs(p.z) > PITCH.halfL - r) p.x = Math.max(-PITCH.goalW + r, Math.min(PITCH.goalW - r, p.x));
     p.x = Math.max(-PITCH.halfW + r, Math.min(PITCH.halfW - r, p.x));
@@ -517,11 +587,20 @@ export const newBody = (x: number, z: number, r = 0, y = 0): Body => ({ x, y, z,
 
 // Un passo di fisica (uguale per il mio personaggio e per i bot)
 export function stepBody(b: Body, input: Input, dt: number, kind: MiniKind, t: number, speedMul = 1) {
-  speedMul *= KIND_SPEED[kind];
+  speedMul *= speedOf(kind);
+  const ext = MINIS[kind];
+  if (ext?.autoRun && Math.hypot(input.x, input.z) < 0.3) input = { ...input, x: Math.sin(b.r), z: Math.cos(b.r) };
+  if (ext?.noJump) input = { ...input, jump: false };
   const len = Math.min(1, Math.hypot(input.x, input.z));
   const ix = len > 0.05 ? (input.x / Math.max(1, Math.hypot(input.x, input.z))) * PHYS.speed * speedMul : 0;
   const iz = len > 0.05 ? (input.z / Math.max(1, Math.hypot(input.x, input.z))) * PHYS.speed * speedMul : 0;
-  if (b.ground) {
+  const grip = MINIS[kind]?.grip;
+  if (b.ground && grip) {
+    // si scivola: la velocità va verso quella voluta poco alla volta
+    const k = Math.min(1, dt * grip);
+    b.vx += (ix - b.vx) * k;
+    b.vz += (iz - b.vz) * k;
+  } else if (b.ground) {
     b.vx = ix;
     b.vz = iz;
   } else {
@@ -532,13 +611,13 @@ export function stepBody(b: Body, input: Input, dt: number, kind: MiniKind, t: n
   if (input.jump && b.ground) {
     b.vy = PHYS.jumpV;
     b.ground = false;
-  } else if (input.jump && !b.ground && (b.airJumps ?? 0) < 1 && !b.dive && kind !== 'PONTE') {
+  } else if (input.jump && !b.ground && (b.airJumps ?? 0) < 1 && !b.dive && !noDoubleJump(kind)) {
     // doppio salto
     b.vy = PHYS.jumpV * PHYS.doubleJump;
     b.airJumps = 1;
   }
   const dir = len > 0.05 ? Math.atan2(input.x, input.z) : b.r;
-  if (input.dash && !NO_DASH.includes(kind)) {
+  if (input.dash && !noDash(kind)) {
     if (b.ground) {
       b.dashT = PHYS.dashTime;
       b.dashDir = dir;
@@ -566,9 +645,9 @@ export function stepBody(b: Body, input: Input, dt: number, kind: MiniKind, t: n
   b.vy -= PHYS.gravity * dt;
   const prevY = b.y;
   // la piattaforma mobile su cui sto mi porta con sé
-  const carry = b.ground ? groundVelX(kind, b.x, b.z, t) : 0;
-  b.x += (b.vx + b.kx + carry) * dt;
-  b.z += (b.vz + b.kz) * dt;
+  const carry = b.ground ? groundVel(kind, b.x, b.z, t) : { x: 0, z: 0 };
+  b.x += (b.vx + b.kx + carry.x) * dt;
+  b.z += (b.vz + b.kz + carry.z) * dt;
   b.y += b.vy * dt;
   const g = groundAt(kind, b.x, b.z, t, prevY);
   if (g !== null && b.y <= g && prevY >= g - 0.6) {
@@ -586,7 +665,7 @@ export function stepBody(b: Body, input: Input, dt: number, kind: MiniKind, t: n
     b.airJumps = 0;
   } else b.ground = false;
   // le pareti valgono solo finché si è sopra il pavimento (chi cade dall'isola cade e basta)
-  if (b.y > -1) clampArena(kind, b);
+  if (b.y > -1 || MINIS[kind]) clampArena(kind, b, t);
   if (Math.hypot(b.vx, b.vz) > 0.3) b.r = Math.atan2(b.vx, b.vz);
 }
 

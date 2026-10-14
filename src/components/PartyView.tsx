@@ -16,8 +16,10 @@ import {
   HEX_TILES,
   MARKET,
   MINIGAMES,
-  NO_DASH,
-  NO_PUSH,
+  MINIS,
+  noDash,
+  noDoubleJump,
+  noPush,
   PHYS,
   PITCH,
   PLAZA,
@@ -39,10 +41,13 @@ import {
   sniperEye,
   stepBody,
   waferY,
+  type BaseKind,
   type Body,
   type MiniKind,
   type NetPos,
 } from '../data/party3d';
+import { CLIENT_MINIS, type ClientMini, type FxCtx, type HudCtx, type MiniFrame } from './party3d/minis/types';
+import './party3d/minis'; // registra i minigiochi a moduli
 import { haptic, soundManager } from '../utils/audio';
 import { animateAvatar, buildArena, burst, createWorld, dust, makeAvatar, makeBomb, makeGun, makeHen, makeSoccerBall, makeTomato, poof, popText, ringPulse, splat, tracer, updateFx, type Avatar, type World } from './party3d/scene';
 import { FruitIcon, MiniIcon, Sticker, UiIcon, pickPhrase, type StickerMood } from './party3d/icons';
@@ -180,7 +185,7 @@ const HIGH_CAM: MiniKind[] = ['SUMO', 'CHAIRS', 'NONNA', 'GALLINA', 'BOTTO', 'WA
 // minigiochi in cui la telecamera parte già girata come il personaggio (verso il centro dell'arena)
 const FACE_SPAWN: MiniKind[] = ['DENTE', 'WAFER', 'CALCIO', 'POMODORI'];
 const sec2 = (ms: number) => (ms / 1000).toFixed(2).replace('.', ',');
-const ORBIT: Record<MiniKind, { c: [number, number, number]; r: number }> = {
+const ORBIT: Record<BaseKind, { c: [number, number, number]; r: number }> = {
   SUMO: { c: [0, 0, 0], r: 26 },
   REDLIGHT: { c: [0, 0, 2], r: 46 },
   CHAIRS: { c: [0, 0, 0], r: 23 },
@@ -197,6 +202,12 @@ const ORBIT: Record<MiniKind, { c: [number, number, number]; r: number }> = {
   POMODORI: { c: [0, 0, 0], r: 28 },
   CORSA: { c: [0, 2, 50], r: 64 },
 };
+
+// minigiochi a moduli (null per quelli classici)
+const cmOf = (kind: MiniKind): ClientMini | undefined => CLIENT_MINIS[kind as keyof typeof CLIENT_MINIS];
+const orbitOf = (kind: MiniKind) => ORBIT[kind as BaseKind] ?? cmOf(kind)?.orbit ?? { c: [0, 0, 0] as [number, number, number], r: 30 };
+const highCam = (kind: MiniKind) => HIGH_CAM.includes(kind) || !!cmOf(kind)?.highCam;
+const faceSpawn = (kind: MiniKind) => FACE_SPAWN.includes(kind) || !!cmOf(kind)?.faceSpawn;
 
 type Others = Map<string, { x: number; y: number; z: number; r: number; a: number; tx: number; ty: number; tz: number; tr: number; speed: number; vx?: number; vz?: number; lt?: number }>;
 
@@ -280,7 +291,8 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
   const finished = a.finished.includes(myId);
   const info = MINIGAMES[a.kind];
 
-  const showSticker = (mood: StickerMood, text = pickPhrase(mood)) => setSticker({ mood, text, key: Date.now() });
+  // l'adesivo grande al centro (faccina + scritta) è spento: copriva il gioco. Restano scritte in 3D, cronaca e suoni
+  const showSticker = (mood: StickerMood, text?: string) => void [mood, text];
   const pushFeed = (text: string) => setFeed((f) => [...f.slice(-3), { key: Date.now() + Math.random(), text, at: Date.now() }]);
 
   // orologio per i conti alla rovescia e per pulire la lista delle eliminazioni
@@ -312,7 +324,7 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
     const s = dataRef.current;
     const b = me.current;
     // a terra o doppio salto in aria
-    if ((b.ground || ((b.airJumps ?? 0) < 1 && !b.dive && s.kind !== 'PONTE')) && s.alive[myId] && !s.snipers.includes(myId) && (s.stage === 'PLAY' || s.stage === 'RESULT')) {
+    if ((b.ground || ((b.airJumps ?? 0) < 1 && !b.dive && !noDoubleJump(s.kind))) && s.alive[myId] && !s.snipers.includes(myId) && (s.stage === 'PLAY' || s.stage === 'RESULT')) {
       jumpQ.current = true;
       soundManager.playJump();
     }
@@ -320,7 +332,7 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
   // scatto (a terra) o tuffo (in aria): per un attimo schivi spinte, mestolo e polpette
   const dash = () => {
     const s = dataRef.current;
-    if (s.stage !== 'PLAY' || NO_DASH.includes(s.kind) || !s.alive[myId] || s.snipers.includes(myId) || Date.now() < dashReady.current) return;
+    if (s.stage !== 'PLAY' || noDash(s.kind) || !s.alive[myId] || s.snipers.includes(myId) || Date.now() < dashReady.current) return;
     dashReady.current = Date.now() + PHYS.dashCooldown;
     dashQ.current = true;
     actRef.current('MG_DASH');
@@ -329,7 +341,7 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
   };
   const push = () => {
     const s = dataRef.current;
-    if (s.stage !== 'PLAY' || NO_PUSH.includes(s.kind) || !s.alive[myId] || s.snipers.includes(myId) || Date.now() < pushReady.current) return;
+    if (s.stage !== 'PLAY' || noPush(s.kind) || !s.alive[myId] || s.snipers.includes(myId) || Date.now() < pushReady.current) return;
     pushReady.current = Date.now() + PHYS.pushCooldown;
     pushAnimUntil.current = Date.now() + 350;
     const b = me.current;
@@ -449,8 +461,31 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
     actRef.current('MG_ACCECA');
     haptic(20);
   };
-  const actions = useRef({ jump, push, fire, dash, stop, throwT, blind });
-  actions.current = { jump, push, fire, dash, stop, throwT, blind };
+  // minigiochi a moduli: quello che serve alle loro scritte e ai loro pulsanti
+  const hudCtx = (): HudCtx => {
+    const s = dataRef.current;
+    return {
+      view: s,
+      ext: s.ext,
+      myId,
+      me: me.current,
+      now: Date.now() + offsetRef.current,
+      coarse,
+      alive: !!s.alive[myId],
+      finished: s.finished.includes(myId),
+      yaw: cam.current.yaw,
+      others: others.current,
+      nameOf: (id) => namesRef.current(id),
+      colorOf: (id) => colorsRef.current(id),
+      act: (type, payload) => actRef.current(type, payload),
+    };
+  };
+  const miniButton = () => {
+    const c = cmOf(dataRef.current.kind);
+    return c?.button && dataRef.current.stage === 'PLAY' && dataRef.current.alive[myId] ? c.button(hudCtx()) : null;
+  };
+  const actions = useRef({ jump, push, fire, dash, stop, throwT, blind, miniButton });
+  actions.current = { jump, push, fire, dash, stop, throwT, blind, miniButton };
   // per le prove dalla console (solo chi ha creato la stanza): __party.prova('GALLINA')
   (window as unknown as { __party?: unknown }).__party = { prova: (kind: string) => actRef.current('MG_PROVA', { kind }), body: me.current, stato: () => dataRef.current };
 
@@ -469,7 +504,10 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
       }
       if (s.kind === 'DENTE' && (k === 'w' || k === 'arrowup')) actions.current.jump();
       if (k === 'e' || k === 'f') {
-        if (s.kind === 'DENTE') actions.current.stop();
+        const mb = actions.current.miniButton();
+        if (mb) {
+          if (!mb.disabled) mb.press();
+        } else if (s.kind === 'DENTE') actions.current.stop();
         else if (s.kind === 'POMODORI') actions.current.throwT();
         else if (s.kind === 'SNIPER' && !s.snipers.includes(myId)) actions.current.blind();
         else actions.current.push();
@@ -509,6 +547,33 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
       }
       if (!w) return;
       const where = (id: string) => (id === myId ? me.current : others.current.get(id));
+      if (p.k === 'respawn') {
+        // il server mi rimette in un punto (es. dopo una caduta)
+        if (p.id === myId) {
+          me.current = newBody(p.x, p.z, p.r ?? 0, p.y);
+          cam.current.shake = Math.max(cam.current.shake, 0.3);
+        } else {
+          const o = others.current.get(p.id);
+          if (o) Object.assign(o, { x: p.x, y: p.y, z: p.z, tx: p.x, ty: p.y, tz: p.z });
+        }
+        return;
+      }
+      const cmx = cmOf(s.kind);
+      if (cmx?.fx) {
+        const fc: FxCtx = {
+          world: w,
+          myId,
+          me: me.current,
+          view: s,
+          where,
+          avatar: (id) => avatars.current.get(id),
+          nameOf: (id) => namesRef.current(id),
+          feed: pushFeed,
+          sticker: (mood, text) => showSticker(mood, text),
+          shake: (k) => (cam.current.shake = Math.max(cam.current.shake, k)),
+        };
+        cmx.fx(p, fc);
+      }
       if (p.k === 'push') {
         const at = where(p.by);
         if (at) ringPulse(w, at.x, at.y, at.z, '#ffffff');
@@ -551,7 +616,7 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
       } else if (p.k === 'out') {
         const at = where(p.id);
         if (at && s.kind !== 'SUMO') poof(w, at.x, at.y, at.z);
-        pushFeed(pick(FEED[p.reason] ?? ['{n} è fuori']).replace('{n}', namesRef.current(p.id)));
+        pushFeed(pick(cmOf(s.kind)?.feed?.[p.reason] ?? FEED[p.reason] ?? ['{n} è fuori']).replace('{n}', namesRef.current(p.id)));
         if (p.id === myId) {
           soundManager.playFall();
           showSticker('out');
@@ -748,14 +813,20 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
       if (builtKind !== s.kind) {
         builtKind = s.kind;
         buildArena(world, s.kind);
+        // via le decorazioni del minigioco di prima (code, macchinine…)
+        for (const av of avatars.current.values()) {
+          for (const g of [av.deco, av.headDeco]) for (const ch of [...g.children]) g.remove(ch);
+          av.body.visible = true;
+          av.label.visible = true;
+        }
       }
       const c = cam.current;
       if (s.spawnNo !== spawnNo && s.spawn) {
         spawnNo = s.spawnNo;
         me.current = newBody(s.spawn.x, s.spawn.z, s.spawn.r, s.spawn.y);
-        c.yaw = FACE_SPAWN.includes(s.kind) ? s.spawn.r : 0;
+        c.yaw = faceSpawn(s.kind) ? s.spawn.r : 0;
         raceBest.current = -99;
-        c.pitch = HIGH_CAM.includes(s.kind) ? 0.62 : 0.34;
+        c.pitch = highCam(s.kind) ? 0.62 : 0.34;
         c.fy = Math.PI;
         c.fp = -0.3;
       }
@@ -788,6 +859,8 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
         }
         setHexState(H.str);
       }
+      const cm = cmOf(s.kind);
+      MINIS[s.kind]?.sync?.(s.ext);
 
       // ---- il mio personaggio
       const body = me.current;
@@ -808,7 +881,8 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
         const input = isAlive && !menuRef.current ? { x: -fz * jx + fx * jf, z: fx * jx + fz * jf, jump: jumpQ.current, dash: dashQ.current } : { x: 0, z: 0, jump: false };
         jumpQ.current = false;
         dashQ.current = false;
-        if (body.y > -40) stepBody(body, input, dt, s.kind, playT, holdingHen ? YARD.holderSpeed : holdingBomb ? PLAZA.holderSpeed : 1);
+        const cmSpeed = cm?.speed ? cm.speed({ t, dt, playT, now: nowS, view: s, ext: s.ext, myId, me: body, latest: rtLink.current?.p3.current.p ?? new Map(), others: others.current }) : 1;
+        if (body.y > -40) stepBody(body, input, dt, s.kind, playT, (holdingHen ? YARD.holderSpeed : holdingBomb ? PLAZA.holderSpeed : 1) * cmSpeed);
         // telecamera "che segue": quando giri, la visuale ti viene dietro da sola (non se stai tornando indietro
         // e non mentre la stai girando tu col dito)
         if (prefsRef.current.cam === 'segue' && isAlive && Date.now() - lastLookAt.current > 700 && Math.hypot(input.x, input.z) > 0.25) {
@@ -890,6 +964,7 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
       // ---- gli altri
       const latest = rtLink.current?.p3.current.p ?? new Map<string, NetPos>();
       const rosterIds = new Set(s.roster.map((r) => r.id));
+      const mf: MiniFrame | null = cm ? { t, dt, playT, now: nowS, view: s, ext: s.ext, myId, me: body, latest, others: others.current } : null;
       for (const [id, p] of latest) {
         // solo i personaggi (la gallina e il pallone si disegnano a parte)
         if (id === myId || !rosterIds.has(id)) continue;
@@ -936,7 +1011,9 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
           dust(world, o.x, o.y, o.z, av.wasAir ? 6 : 2);
         }
         animateAvatar(av, o.a, o.speed, t, dt);
+        if (mf && cm?.decorate) cm.decorate(av, id, mf);
       }
+      if (mf && cm?.local && (s.stage === 'PLAY' || s.stage === 'RESULT')) cm.local(mf, world);
       const mine = avatarFor(myId);
       teamRing(mine, myId);
       const fps = isSniper && s.stage !== 'END';
@@ -950,6 +1027,7 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
         dust(world, body.x, body.y, body.z, mine.wasAir ? 7 : 2);
       }
       animateAvatar(mine, myAnim, Math.hypot(body.vx, body.vz), t, dt);
+      if (mf && cm?.decorate) cm.decorate(mine, myId, mf);
 
       // ---- la gallina d'oro
       hen.visible = s.kind === 'GALLINA' && s.stage !== 'INTRO';
@@ -1050,7 +1128,7 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
         const wantLook = new THREE.Vector3();
         if (s.stage === 'INTRO' || (!isAlive && !(s.kind === 'SUMO' && body.y > -12))) {
           // giro panoramico (introduzione) o vista dall'alto per chi è fuori (si può girare trascinando)
-          const o = ORBIT[s.kind];
+          const o = orbitOf(s.kind);
           const yaw = s.stage === 'INTRO' ? t * 0.22 : c.yaw;
           const p = s.stage === 'INTRO' ? 0.5 : Math.max(0.35, c.pitch);
           wantPos.set(o.c[0] - Math.sin(yaw) * Math.cos(p) * o.r, o.c[1] + Math.sin(p) * o.r, o.c[2] - Math.cos(yaw) * Math.cos(p) * o.r);
@@ -1065,7 +1143,7 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
           camPos.lerp(wantPos, Math.min(1, dt * 8));
           camLook.lerp(wantLook, Math.min(1, dt * 8));
         } else {
-          const high = HIGH_CAM.includes(s.kind);
+          const high = highCam(s.kind);
           const dist = high ? 12.5 : 9.5;
           const target = new THREE.Vector3(body.x, Math.max(s.kind === 'WAFER' ? -WAFER.gap * (WAFER.layers - 1) - 3 : -3, body.y), body.z);
           follow = follow ?? target.clone();
@@ -1101,6 +1179,11 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
         score: s.soccer?.score ?? null,
         doors: s.doors ?? [],
         me: { x: body.x, y: body.y, z: body.z },
+        view: s,
+        myId,
+        body,
+        latest,
+        others: others.current,
       });
       updateFx(world, dt);
       world.render(dt);
@@ -1434,9 +1517,16 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
   const throwLeft = Math.max(0, throwReady.current - Date.now());
   const myLayer = Math.max(0, Math.min(WAFER.layers - 1, Math.round(-me.current.y / WAFER.gap)));
 
+  const cm = cmOf(a.kind);
+  const hc = cm ? hudCtx() : null;
+  const cmBtn = cm?.button && hc && a.stage === 'PLAY' && alive ? cm.button(hc) : null;
   let status: ReactNode = null;
   if (a.stage === 'PLAY') {
     if (!alive) status = <Pill cls="sc-dark">Sei fuori · stai guardando</Pill>;
+    else if (cm?.status && hc) {
+      const st = cm.status(hc);
+      if (st) status = <Pill cls={st.cls}>{st.text}</Pill>;
+    }
     else if (a.kind === 'REDLIGHT' && finished) status = <Pill cls="sc-green">{`ARRIVATO ${myRank + 1}°`}</Pill>;
     else if (a.kind === 'REDLIGHT' && a.light)
       status =
@@ -1602,6 +1692,9 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
         </div>
       )}
 
+      {/* minigiochi a moduli: punteggi e pezzi in più */}
+      {cm?.hud && hc && a.stage !== 'INTRO' && cm.hud(hc)}
+
       {/* stato del minigioco */}
       <div className="pointer-events-none absolute inset-x-0 bottom-[160px] flex flex-col items-center gap-2 px-3 landscape:bottom-auto landscape:top-[70px]">{status}</div>
 
@@ -1648,12 +1741,20 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
           <div className="absolute bottom-[max(18px,env(safe-area-inset-bottom))] right-[max(16px,env(safe-area-inset-right))] flex items-end gap-3">
             {a.stage === 'PLAY' && (
               <div className="flex flex-col items-center gap-3">
-                {a.kind !== 'PONTE' && (
+                {!noDash(a.kind) && (
                 <GameButton icon={<UiIcon name="dash" size={26} />} label="SCATTO" cls="sc-yellow" size={64} keyHint="SHIFT" onPress={() => actions.current.dash()}>
                   {dashLeft > 0 && <span className="absolute inset-0 grid place-items-center rounded-full bg-[#1d0f3d]/60 font-display text-xl text-white">{Math.ceil(dashLeft / 1000)}</span>}
                 </GameButton>
                 )}
-                {a.kind === 'POMODORI' ? (
+                {cmBtn ? (
+                  <GameButton icon={cmBtn.icon} label={cmBtn.label} cls={cmBtn.cls} size={cmBtn.size ?? 78} keyHint={cmBtn.keyHint ?? 'E / CLIC'} disabled={cmBtn.disabled} onPress={() => cmBtn.press()}>
+                    {cmBtn.cooldown && cmBtn.cooldown.until > Date.now() && (
+                      <svg className="pointer-events-none absolute inset-[-6px]" viewBox="0 0 100 100" aria-hidden="true">
+                        <circle cx="50" cy="50" r="46" fill="none" stroke="#ffd60a" strokeWidth="7" strokeDasharray={`${(1 - (cmBtn.cooldown.until - Date.now()) / cmBtn.cooldown.total) * 289} 289`} transform="rotate(-90 50 50)" strokeLinecap="round" />
+                      </svg>
+                    )}
+                  </GameButton>
+                ) : cm && noPush(a.kind) ? null : a.kind === 'POMODORI' ? (
                   <GameButton icon={<UiIcon name="tomato" size={32} />} label="LANCIA" cls="sc-red" size={80} keyHint="E / CLIC" onPress={() => actions.current.throwT()}>
                     {throwLeft > 0 && (
                       <svg className="pointer-events-none absolute inset-[-6px]" viewBox="0 0 100 100" aria-hidden="true">
@@ -1693,7 +1794,9 @@ export default function PartyView({ state, clockOffset, canLead, onAction, onNew
       )}
       {showControls && a.stage === 'PLAY' && !coarse && (
         <p className="sc-chip pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 text-xs font-bold text-white">
-          {sniper
+          {cm?.hint
+            ? cm.hint
+            : sniper
             ? 'Muovi il mouse per mirare · tasto destro mirino · sinistro spara'
             : a.kind === 'PONTE'
               ? 'WASD muovi · spazio salta · E schiaffo · qui niente doppio salto!'

@@ -4,6 +4,8 @@ import { motion } from 'motion/react';
 import { Settings } from 'lucide-react';
 import type { ClientGameState, DrawOp, GameId } from '../types/game';
 import type { Realtime } from '../hooks/useGameSocket';
+import { FLAT_GAMES } from '../data/flatGames';
+import { FLAT_VIEWS } from './flat';
 
 // Personaggi per gli avatar: immagine creata con "npm run grafica", altrimenti l'emoji
 export const AVATARS: { id: string; emoji: string }[] = [
@@ -29,6 +31,8 @@ export const GAME_CATEGORIES = [
   { id: 'risate', name: 'Risate', emoji: '😂' },
   { id: 'voce', name: 'A voce', emoji: '🗣️' },
   { id: 'ruoli', name: 'Ruoli segreti', emoji: '🕵️' },
+  { id: 'bluff', name: 'Bluff', emoji: '🃏' },
+  { id: 'quiz', name: 'Quiz e parole', emoji: '🧠' },
 ] as const;
 export type GameCategory = (typeof GAME_CATEGORIES)[number]['id'];
 
@@ -48,6 +52,8 @@ export const GAMES: { id: GameId; name: string; desc: string; emoji: string; ban
   { id: 'CHISONO', name: 'Chi sono?', desc: 'Tutti sanno chi sei, tranne te', emoji: '🦸', banner: '/art/gioco-chisono.webp', cat: 'voce' },
   { id: 'SPIA', name: 'La Spia', desc: 'Tutti conoscono il luogo, tranne la spia', emoji: '🕵️', banner: '/art/gioco-spia.webp', cat: 'ruoli' },
   { id: 'IMPOSTORE', name: "L'Impostore", desc: 'Una parola segreta e un impostore tra voi', emoji: '🎭', banner: '/art/gioco-impostore.webp', cat: 'ruoli' },
+  // giochi flat a moduli (src/data/flatGames.ts)
+  ...FLAT_GAMES.filter((g) => FLAT_VIEWS[g.id]).map((g) => ({ id: g.id, name: g.name, desc: g.desc, emoji: g.emoji, banner: `/art/gioco-${g.id.toLowerCase()}.webp`, cat: g.cat as GameCategory, isNew: true })),
 ];
 
 // Bollino "NUOVO" sui giochi appena arrivati

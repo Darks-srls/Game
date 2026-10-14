@@ -10,11 +10,13 @@ import { PARTY2_MODES } from './party2';
 import { ASTRO_MODES } from './astro';
 import { PARTY3D_MODES } from './party3d';
 import { HORROR_MODES } from './horror1';
+import { FLAT_MODES } from './flat';
+import { FLAT_IDS, flatInfo } from '../src/data/flatGames';
 import type { NetPos } from '../src/data/party3d';
 import { WORLD } from '../src/data/astro';
 
 // Tutti i giochi "a moduli": disegno e bomba (modes.ts), giochi di gruppo (party.ts e party2.ts), videogiochi (astro.ts)
-const MODES = { ...BASE_MODES, ...PARTY_MODES, ...PARTY2_MODES, ...ASTRO_MODES, ...PARTY3D_MODES, ...HORROR_MODES };
+const MODES = { ...BASE_MODES, ...PARTY_MODES, ...PARTY2_MODES, ...ASTRO_MODES, ...PARTY3D_MODES, ...HORROR_MODES, ...FLAT_MODES };
 // Videogiochi in tempo reale: le posizioni viaggiano a parte, 10 volte al secondo
 const REALTIME: GameId[] = ['ASTRO'];
 const P3_GAMES: GameId[] = ['PARTY3D', 'HORROR1']; // giochi 3D: posizioni con quota, bot e fisica sul server
@@ -32,6 +34,7 @@ const MAX_PLAYERS = 16;
 const GAMES: GameId[] = [
   'SPIA', 'IMPOSTORE', 'TELEFONO', 'DISEGNA', 'BOMBA', 'ARTISTA', 'BATTUTE', 'PREFERIRESTI', 'SINTONIA', 'TABU', 'CHISONO',
   'TEATRINO', 'SMORFIE', 'DADI', 'OCA', 'NONRIDERE', 'ASTRO', 'PARTY3D', 'HORROR1',
+  ...FLAT_IDS, // giochi flat a moduli
 ];
 const STEP_GRACE = 4000; // a turno scaduto, qualche secondo per le consegne automatiche dei telefoni
 const AWAY_GRACE = 45_000; // chi esce dall'app resta "attivo" per 45 secondi: se rientra, nessuno se ne accorge
@@ -139,6 +142,7 @@ export class GameServer extends DurableObject {
         room.settings.horrorPressure ??= 1;
         room.settings.spicy ??= false;
         room.settings.privateRoom ??= false;
+        room.settings.extra ??= {};
         room.secretWords ??= null;
         room.tel ??= null;
         room.mg ??= null;
@@ -880,6 +884,7 @@ export class GameServer extends DurableObject {
           horrorPressure: 1,
           spicy: false,
           privateRoom: false,
+          extra: {},
         },
         currentRound: 0,
         roundPlayerIds: [],
@@ -1036,6 +1041,14 @@ export class GameServer extends DurableObject {
         if (typeof payload.horrorPressure === 'number') s.horrorPressure = Math.max(0, Math.min(2, Math.round(payload.horrorPressure)));
         if (typeof payload.spicy === 'boolean') s.spicy = payload.spicy;
         if (typeof payload.privateRoom === 'boolean') s.privateRoom = payload.privateRoom;
+        // giochi flat a moduli: solo le impostazioni del gioco scelto, solo con i valori ammessi
+        if (payload.extra && typeof payload.extra === 'object') {
+          const info = flatInfo(s.game);
+          for (const [k, v] of Object.entries(payload.extra as Record<string, unknown>)) {
+            const o = info?.options.find((x) => x.key === k);
+            if (o && typeof v === 'number' && o.values.some(([x]) => x === v)) s.extra = { ...(s.extra ?? {}), [k]: v };
+          }
+        }
         if (Array.isArray(payload.selectedCategories)) {
           const cats = payload.selectedCategories.filter((c: unknown) => typeof c === 'string' && LOCATION_CATEGORIES.includes(c));
           if (cats.length) s.selectedCategories = cats;
@@ -1049,8 +1062,12 @@ export class GameServer extends DurableObject {
         // Axend Party: si può giocare anche in pochi, i bot riempiono la partita
         const party = room.settings.game === 'PARTY3D';
         const horror = room.settings.game === 'HORROR1';
+        const flat = flatInfo(room.settings.game);
         if (horror && online.length > 8) return this.error(ws, 'Questo gioco è per squadre da 1 a 8 persone.');
-        if (!horror && (party ? online.length < 1 || online.length + room.settings.partyBots < 3 : online.length < 3))
+        if (flat && !MODES[flat.id]) return this.error(ws, `${flat.name} non è ancora pronto: scegli un altro gioco.`);
+        if (flat && online.length < flat.min) return this.error(ws, `Per ${flat.name} servono almeno ${flat.min} giocatori collegati.`);
+        if (flat?.max && online.length > flat.max) return this.error(ws, `${flat.name} si gioca al massimo in ${flat.max}.`);
+        if (!horror && !flat && (party ? online.length < 1 || online.length + room.settings.partyBots < 3 : online.length < 3))
           return this.error(ws, party ? 'Servono almeno 3 giocatori, contando i bot.' : 'Servono almeno 3 giocatori collegati per iniziare.');
         this.resetRound(room);
         this.clearTel(room);

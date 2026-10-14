@@ -2,10 +2,11 @@
 // colori pieni e riflessi, nello stile dei giochi mobile "cartoon".
 import type { ReactNode } from 'react';
 import type { MiniKind } from '../../data/party3d';
+import { CLIENT_MINIS } from './minis/types';
 
-const INK = '#1d0f3d';
+export const INK = '#1d0f3d';
 
-function Badge({ size, from, to, children }: { size: number; from: string; to: string; children: ReactNode }) {
+export function Badge({ size, from, to, children }: { size: number; from: string; to: string; children: ReactNode }) {
   const id = `g${from.slice(1)}${to.slice(1)}`;
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true">
@@ -23,10 +24,12 @@ function Badge({ size, from, to, children }: { size: number; from: string; to: s
   );
 }
 
-const stroke = { stroke: INK, strokeWidth: 4, strokeLinejoin: 'round' as const, strokeLinecap: 'round' as const };
+export const stroke = { stroke: INK, strokeWidth: 4, strokeLinejoin: 'round' as const, strokeLinecap: 'round' as const };
 
 // Icona di ogni minigioco
 export function MiniIcon({ kind, size = 64 }: { kind: MiniKind; size?: number }) {
+  const ext = CLIENT_MINIS[kind as keyof typeof CLIENT_MINIS];
+  if (ext) return <>{ext.icon(size)}</>;
   switch (kind) {
     case 'SUMO':
       return (

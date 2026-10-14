@@ -10,7 +10,8 @@ import {
   BOT_NAMES,
   CHAIRS,
   MINIGAMES,
-  MINI_KINDS,
+  MINIS,
+  miniKinds,
   PARTY_COLORS,
   PHYS,
   POINTS,
@@ -41,8 +42,8 @@ import {
   DOOR,
   DOOR_ROWS,
   PLATS,
-  NO_PUSH,
-  NO_DASH,
+  noPush,
+  noDash,
   dentePlace,
   waferY,
   hexAt,
@@ -77,6 +78,8 @@ import {
   type MiniKind,
   type NetPos,
 } from '../src/data/party3d';
+import { SERVER_MINIS, type MiniApi, type ServerMini } from './minis/types';
+import './minis'; // registra i minigiochi a moduli
 
 interface Bot {
   id: string;
@@ -94,6 +97,7 @@ interface Bot {
   plan: number; // pasta al dente: quando scola (ms); corsa: piattaforma su cui sta saltando
   tried: string[]; // corsa: porte finte già provate
   memo: Record<string, number>; // corsa: decisioni prese davanti agli ostacoli (aspettare o buttarsi)
+  mem: any; // minigiochi a moduli: memoria libera del bot
 }
 
 interface PState {
@@ -173,6 +177,9 @@ interface PState {
   doorOpen: string[];
   doorBump: Record<string, number>;
   hitAt: Record<string, number>;
+  // minigiochi a moduli: stato del minigioco e ultime ripartenze
+  ext: any;
+  tpAt: Record<string, number>;
 }
 
 const INTRO_MS = 7_000;
@@ -189,6 +196,71 @@ function pos(s: PState, ctx: Ctx, id: string): NetPos | null {
   const b = isBot(s, id);
   if (b) return { x: b.body.x, y: b.body.y, z: b.body.z, r: b.body.r, a: 0 };
   return ctx.p3get(id) ?? null;
+}
+
+// ---------------------------------------------------------------- minigiochi a moduli: l'api che ricevono
+
+const extOf = (s: PState): ServerMini | undefined => SERVER_MINIS[s.kind as keyof typeof SERVER_MINIS];
+// l'ultimo ctx di ogni partita (view() non lo riceve, ma i minigiochi a moduli possono chiedere le posizioni)
+const LAST_CTX = new WeakMap<PState, Ctx>();
+
+function makeApi(s: PState, ctx: Ctx): MiniApi {
+  const now = ctx.now;
+  const api: MiniApi = {
+    ext: s.ext,
+    ctx,
+    now,
+    t: s.playStart ? Math.max(0, (now - s.playStart) / 1000) : 0,
+    stage: s.stage,
+    stageEndsAt: s.stageEndsAt,
+    ids: () => everyone(s),
+    inGame: () => everyone(s).filter((id) => s.alive[id] && !s.finished.includes(id)),
+    humans: s.humans,
+    bots: s.bots,
+    bot: (id) => isBot(s, id),
+    alive: (id) => !!s.alive[id],
+    finished: (id) => s.finished.includes(id),
+    pos: (id) => pos(s, ctx, id),
+    vel: (id) => velOf(s, id),
+    color: (id) => s.colors[id] ?? '#ffffff',
+    name: (id) => isBot(s, id)?.name ?? '',
+    eliminate: (id, reason) => eliminate(s, ctx, id, reason),
+    finish: (id) => {
+      if (s.alive[id] && !s.finished.includes(id)) s.finished.push(id);
+    },
+    fling: (id, v) => fling(s, ctx, id, v),
+    teleport: (id, p) => {
+      if (now - (s.tpAt[id] ?? 0) < 700) return;
+      s.tpAt[id] = now;
+      const r = p.r ?? 0;
+      const b = isBot(s, id);
+      if (b) {
+        b.body = newBody(p.x, p.z, r, p.y);
+        b.goal = null;
+      } else ctx.emit('P3_FX', { k: 'respawn', id, x: p.x, y: p.y, z: p.z, r });
+      ctx.p3set(id, { x: p.x, y: p.y, z: p.z, r, a: ANIM.idle });
+    },
+    dodging: (id) => dodging(s, ctx, id),
+    emit: (fx) => ctx.emit('P3_FX', fx),
+    end: () => {
+      if (s.stage === 'PLAY') finishRound(s, ctx);
+    },
+    setObj: (key, p) => ctx.p3set(key, p),
+    go: (b, gx, gz, speed = 1) => {
+      const dx = gx - b.body.x;
+      const dz = gz - b.body.z;
+      const d = Math.hypot(dx, dz);
+      if (d > 0.3) b.input = { ...b.input, x: (dx / d) * speed, z: (dz / d) * speed };
+      return d;
+    },
+    push: (b, x, z) => {
+      if (x !== undefined && z !== undefined) b.body.r = Math.atan2(x - b.body.x, z - b.body.z);
+      doPush(s, ctx, b.id);
+    },
+    dash: (b) => botDash(s, ctx, b),
+    rand,
+  };
+  return api;
 }
 
 // ---------------------------------------------------------------- inizio di ogni minigioco
@@ -209,12 +281,15 @@ function layout(s: PState, ctx: Ctx) {
   if (s.kind === 'CALCIO') soccerTeams(s);
   const runners = ids.filter((id) => !s.snipers.includes(id));
   const tiles = shuffle(Array.from({ length: FRUIT.n * FRUIT.n }, (_, i) => i));
+  const mini = extOf(s);
+  const api = mini ? makeApi(s, ctx) : null;
   shuffle(runners).forEach((id, i, list) => {
     const m = list.length;
     const f = m <= 1 ? 0.5 : i / (m - 1);
     const a = (i / m) * Math.PI * 2;
     let p = { x: 0, y: 0, z: 0, r: 0 };
-    if (s.kind === 'SUMO') p = { x: Math.sin(a) * 8, y: 0, z: Math.cos(a) * 8, r: a + Math.PI };
+    if (mini && api) p = mini.spawn ? mini.spawn(api, id, i, m) : { x: Math.sin(a) * 8, y: 0, z: Math.cos(a) * 8, r: a + Math.PI };
+    else if (s.kind === 'SUMO') p = { x: Math.sin(a) * 8, y: 0, z: Math.cos(a) * 8, r: a + Math.PI };
     else if (s.kind === 'NONNA') p = { x: Math.sin(a) * 6, y: 0, z: Math.cos(a) * 6, r: a + Math.PI };
     else if (s.kind === 'GALLINA') p = { x: Math.sin(a) * 9, y: 0, z: Math.cos(a) * 9, r: a + Math.PI };
     else if (s.kind === 'POLPETTE') p = { x: -6 + 12 * f, y: 0, z: SLOPE.start, r: 0 };
@@ -250,6 +325,7 @@ function layout(s: PState, ctx: Ctx) {
       b.plan = 0;
       b.tried = [];
       b.memo = {};
+      b.mem = {};
       b.input = { x: 0, z: 0, jump: false };
     }
     ctx.p3set(id, { x: p.x, y: p.y, z: p.z, r: p.r, a: ANIM.idle });
@@ -306,8 +382,17 @@ function kickoff(s: PState, ctx: Ctx) {
   ctx.p3set('ball', { x: 0, y: PITCH.ballR, z: 0, r: 0, a: 0 });
 }
 
+// quando ognuno ha giocato l'ultima volta a ogni minigioco (serve a non riproporre sempre gli stessi)
+const SEEN = new Map<string, Map<MiniKind, number>>();
+
 function beginRound(s: PState, ctx: Ctx) {
   s.kind = s.queue[s.round];
+  for (const id of s.humans) {
+    const m = SEEN.get(id) ?? new Map<MiniKind, number>();
+    m.set(s.kind, ctx.now);
+    SEEN.set(id, m);
+  }
+  if (SEEN.size > 2000) SEEN.delete(SEEN.keys().next().value!);
   s.stage = 'INTRO';
   s.stageEndsAt = ctx.now + INTRO_MS;
   s.playStart = null;
@@ -354,6 +439,10 @@ function beginRound(s: PState, ctx: Ctx) {
   s.doorOpen = [];
   s.doorBump = {};
   s.hitAt = {};
+  s.tpAt = {};
+  s.ext = {};
+  const mini = extOf(s);
+  if (mini?.init) s.ext = mini.init(makeApi(s, ctx)) ?? {};
   layout(s, ctx);
   if (s.kind === 'CALCIO') {
     s.ball = newBall(ctx.now);
@@ -383,6 +472,7 @@ function startPlay(s: PState, ctx: Ctx) {
   if (s.kind === 'DENTE') denteGo(s, ctx, 0);
   if (s.kind === 'FRUTTA') fruitGiro(s, ctx, 0);
   if (s.kind === 'CALCIO') s.ball = newBall(ctx.now);
+  extOf(s)?.play?.(makeApi(s, ctx));
   // chi non è collegato non gioca
   for (const id of s.humans) if (!ctx.isOnline(id)) eliminate(s, ctx, id, 'offline');
 }
@@ -470,7 +560,7 @@ const velOf = (s: PState, id: string) => {
 
 // scatto: per un attimo non ti prende niente (spinte, mestolo, polpette)
 function doDash(s: PState, ctx: Ctx, id: string): boolean {
-  if (s.stage !== 'PLAY' || NO_DASH.includes(s.kind) || !s.alive[id] || ctx.now < (s.dashReady[id] ?? 0) - 150) return false;
+  if (s.stage !== 'PLAY' || noDash(s.kind) || !s.alive[id] || ctx.now < (s.dashReady[id] ?? 0) - 150) return false;
   s.dashReady[id] = ctx.now + PHYS.dashCooldown;
   s.dodge[id] = ctx.now + PHYS.dodgeMs;
   ctx.emit('P3_FX', { k: 'dash', id });
@@ -490,7 +580,25 @@ function eliminate(s: PState, ctx: Ctx, id: string, reason: string) {
 function finishRound(s: PState, ctx: Ctx) {
   const rp: Record<string, number> = Object.fromEntries(everyone(s).map((id) => [id, 0]));
   const groups: string[][] = [];
-  if (s.kind === 'SNIPER') {
+  const mini = extOf(s);
+  const ranked = mini?.rank?.(makeApi(s, ctx));
+  if (ranked && !Array.isArray(ranked)) {
+    // il minigioco dà i punti direttamente
+    for (const id of everyone(s)) rp[id] = Math.max(0, Math.round(ranked[id] ?? 0));
+  } else if (mini) {
+    // gruppi dal primo all'ultimo (di solito: chi è arrivato, chi è rimasto in piedi, poi gli eliminati dall'ultimo al primo)
+    const order = ranked ?? [...s.finished.map((id) => [id]), everyone(s).filter((id) => s.alive[id] && !s.finished.includes(id)), ...[...s.out].reverse().map((id) => [id])];
+    let place = 0;
+    const seen = new Set<string>();
+    for (const g of order) {
+      const fresh = g.filter((id) => !seen.has(id) && id in rp);
+      for (const id of fresh) {
+        rp[id] = POINTS[place] ?? 1;
+        seen.add(id);
+      }
+      place += fresh.length;
+    }
+  } else if (s.kind === 'SNIPER') {
     s.finished.forEach((id, i) => (rp[id] = POINTS[i] ?? 1));
     for (const id of everyone(s)) if (!s.snipers.includes(id) && !s.finished.includes(id)) rp[id] = s.alive[id] ? 2 : 1;
     for (const id of s.snipers) rp[id] = (s.hits[id] ?? 0) * SNIPER_HIT_POINTS;
@@ -543,8 +651,18 @@ function nextRound(s: PState, ctx: Ctx) {
 // ---------------------------------------------------------------- azioni
 
 function doPush(s: PState, ctx: Ctx, by: string): boolean {
-  if (s.stage !== 'PLAY' || NO_PUSH.includes(s.kind) || !s.alive[by] || s.snipers.includes(by) || seatedOn(s, by) >= 0 || s.finished.includes(by)) return false;
+  if (s.stage !== 'PLAY' || noPush(s.kind) || !s.alive[by] || s.snipers.includes(by) || seatedOn(s, by) >= 0 || s.finished.includes(by)) return false;
   if (ctx.now < (s.pushReady[by] ?? 0)) return false;
+  const mini = extOf(s);
+  if (mini?.push) {
+    const own = mini.push(makeApi(s, ctx), by);
+    if (own !== undefined) {
+      s.pushReady[by] = ctx.now + PHYS.pushCooldown;
+      const pb = isBot(s, by);
+      if (pb) pb.pushAnimUntil = ctx.now + 350;
+      return own;
+    }
+  }
   const p = pos(s, ctx, by);
   if (!p) return false;
   s.pushReady[by] = ctx.now + PHYS.pushCooldown;
@@ -599,6 +717,7 @@ function doPush(s: PState, ctx: Ctx, by: string): boolean {
   const pb = isBot(s, by);
   if (pb) pb.pushAnimUntil = ctx.now + 350;
   ctx.emit('P3_FX', { k: 'push', by, hit: hit.map((h) => h.id) });
+  if (mini?.onPush) mini.onPush(makeApi(s, ctx), by, hit.map((h) => h.id));
   const H = s.hen;
   if (s.kind === 'GALLINA' && H?.holder && ctx.now >= (H.safeUntil ?? 0) && hit.some((h) => h.id === H.holder)) {
     // schiaffo a chi ce l'ha: la gallina passa subito a chi l'ha colpito (e per un attimo non gliela si può riprendere)
@@ -687,6 +806,11 @@ function botBrain(s: PState, ctx: Ctx, b: Bot) {
     return d;
   };
   const others = everyone(s).filter((id) => id !== b.id && s.alive[id] && !s.snipers.includes(id));
+  const mini = extOf(s);
+  if (mini) {
+    mini.bot?.(makeApi(s, ctx), b);
+    return;
+  }
 
   if (s.kind === 'SUMO') {
     const R = sumoRadius(t);
@@ -1324,7 +1448,10 @@ function botBrain(s: PState, ctx: Ctx, b: Bot) {
 }
 
 // lo stato delle arene condivise (mattonelle, piastrelle, porte) va rimesso prima di ogni giro: il server tiene più stanze
-function syncArena(s: PState) {
+function syncArena(s: PState, ctx?: Ctx) {
+  const shared = MINIS[s.kind];
+  const mini = extOf(s);
+  if (shared?.sync && mini?.view && ctx) shared.sync(mini.view(makeApi(s, ctx), ''));
   if (s.kind === 'PONTE') setBrokenTiles(s.broken);
   if (s.kind === 'WAFER') setHexState(s.hex);
   if (s.kind === 'FRUTTA') setFruitOpen(s.fruit?.open ?? []);
@@ -1333,7 +1460,9 @@ function syncArena(s: PState) {
 
 function moveBots(s: PState, ctx: Ctx, dt: number) {
   const t = s.playStart ? (ctx.now - s.playStart) / 1000 : 0;
-  syncArena(s);
+  syncArena(s, ctx);
+  const mini = extOf(s);
+  const api = mini?.speed ? makeApi(s, ctx) : null;
   for (const b of s.bots) {
     const sniper = s.snipers.includes(b.id);
     if (!s.alive[b.id] && s.kind !== 'SUMO') {
@@ -1345,7 +1474,7 @@ function moveBots(s: PState, ctx: Ctx, dt: number) {
     const seat = seatedOn(s, b.id);
     if (!sniper && seat < 0 && b.body.y > -40) {
       // in luce rossa chi si è fermato resta fermo davvero (anche se in volo)
-      const mul = s.hen?.holder === b.id ? YARD.holderSpeed : s.bomb?.holder === b.id ? PLAZA.holderSpeed : 1;
+      const mul = api && mini?.speed ? mini.speed(api, b.id) : s.hen?.holder === b.id ? YARD.holderSpeed : s.bomb?.holder === b.id ? PLAZA.holderSpeed : 1;
       stepBody(b.body, b.input, dt, s.kind, t, (0.85 + b.skill * 0.2) * mul);
       if (s.kind === 'POLPETTE' && b.body.y < -8) b.body = newBody(rand(-5, 5), SLOPE.start);
       if (s.kind === 'CORSA' && b.body.y < -8) {
@@ -1387,7 +1516,7 @@ function playTick(s: PState, ctx: Ctx, dt: number): boolean {
   for (const id of everyone(s)) {
     if (!s.alive[id] || s.snipers.includes(id)) continue;
     const p = pos(s, ctx, id);
-    if (p && p.y < fallY && s.kind !== 'POLPETTE' && s.kind !== 'CORSA') eliminate(s, ctx, id, why);
+    if (p && p.y < fallY && s.kind !== 'POLPETTE' && s.kind !== 'CORSA' && extOf(s)?.falls !== 'none') eliminate(s, ctx, id, why);
   }
   // velocità stimata dei giocatori veri (serve alla palla e alla mira dei bot)
   if (s.kind === 'CALCIO' || s.kind === 'POMODORI')
@@ -1406,8 +1535,16 @@ function playTick(s: PState, ctx: Ctx, dt: number): boolean {
       }
     }
   const runnersLeft = () => everyone(s).filter((id) => s.alive[id] && !s.finished.includes(id) && !s.snipers.includes(id));
+  const mini = extOf(s);
 
-  if (s.kind === 'SUMO') {
+  if (mini) {
+    if (mini.tick?.(makeApi(s, ctx), dt)) changed = true;
+    if (s.stage === 'PLAY') {
+      const left = runnersLeft().length;
+      const ends = mini.ends ?? 'last';
+      if ((s.stageEndsAt && now >= s.stageEndsAt) || (ends === 'last' && left <= 1) || (ends === 'all' && left === 0)) finishRound(s, ctx);
+    }
+  } else if (s.kind === 'SUMO') {
     if (everyone(s).filter((id) => s.alive[id]).length <= 1 || (s.stageEndsAt && now >= s.stageEndsAt)) finishRound(s, ctx);
   } else if (s.kind === 'REDLIGHT' && s.light) {
     const L = s.light;
@@ -2030,6 +2167,13 @@ function raceTick(s: PState, ctx: Ctx, dt: number): boolean {
   return changed;
 }
 
+function viewExt(s: PState, me: string) {
+  const mini = extOf(s);
+  const ctx = LAST_CTX.get(s);
+  if (!mini?.view || !ctx) return null;
+  return mini.view(makeApi(s, { ...ctx, now: Date.now() }), me) ?? null;
+}
+
 // ---------------------------------------------------------------- il gioco
 
 export const party3d: Mode<PState> = {
@@ -2055,11 +2199,19 @@ export const party3d: Mode<PState> = {
       plan: 0,
       tried: [],
       memo: {},
+      mem: {},
     }));
-    // scaletta: tutti i minigiochi mescolati, senza lo stesso due volte di fila
+    // scaletta: prima i minigiochi che questi giocatori non fanno da più tempo (poi mescolati), senza lo stesso due volte di fila
+    const want = Math.max(1, settings.partyRounds ?? 5);
     const queue: MiniKind[] = [];
-    while (queue.length < Math.max(1, settings.partyRounds ?? 5)) {
-      for (const k of shuffle(MINI_KINDS)) if (queue.length < (settings.partyRounds ?? 5) && queue[queue.length - 1] !== k) queue.push(k);
+    while (queue.length < want) {
+      const fresh = shuffle(miniKinds())
+        .map((k) => ({ k, at: Math.max(0, ...humans.map((id) => SEEN.get(id)?.get(k) ?? 0)) + Math.random() * 60_000 }))
+        .sort((x, y) => x.at - y.at)
+        .slice(0, want - queue.length)
+        .map((x) => x.k);
+      for (const k of shuffle(fresh)) if (queue[queue.length - 1] !== k) queue.push(k);
+      if (!fresh.length) break;
     }
     const s: PState = {
       humans,
@@ -2129,11 +2281,14 @@ export const party3d: Mode<PState> = {
       doorOpen: [],
       doorBump: {},
       hitAt: {},
+      ext: {},
+      tpAt: {},
     };
     beginRound(s, ctx);
     return s;
   },
   action(s, me, type, payload, ctx) {
+    LAST_CTX.set(s, ctx);
     switch (type) {
       case 'MG_PUSH':
         return doPush(s, ctx, me);
@@ -2160,7 +2315,7 @@ export const party3d: Mode<PState> = {
       case 'MG_PROVA': {
         // solo per le prove (console di chi crea la stanza): salta subito a un minigioco
         const k = String(payload.kind ?? '') as MiniKind;
-        if (!ctx.canLead(me) || !MINI_KINDS.includes(k) || s.stage === 'END') return false;
+        if (!ctx.canLead(me) || !miniKinds().includes(k) || s.stage === 'END') return false;
         s.queue[s.round] = k;
         beginRound(s, ctx);
         return true;
@@ -2171,14 +2326,17 @@ export const party3d: Mode<PState> = {
         else if (s.stage === 'RESULT') nextRound(s, ctx);
         else return false;
         return true;
-      default:
-        return false;
+      default: {
+        const fn = extOf(s)?.actions?.[type];
+        return fn && s.humans.includes(me) ? fn(makeApi(s, ctx), me, payload ?? {}) : false;
+      }
     }
   },
   // la sveglia del server: il grosso lo fa p3Tick, questa serve se il giro si è fermato (es. riavvio)
   tick: () => false,
   deadline: (s) => (s.stage === 'END' ? null : (s.stageEndsAt ?? Date.now() + 10_000)),
   p3Tick(s, ctx, dt) {
+    LAST_CTX.set(s, ctx);
     const before = `${s.stage}:${s.round}`;
     let changed = false;
     if (s.stage === 'INTRO' && s.stageEndsAt && ctx.now >= s.stageEndsAt) {
@@ -2188,7 +2346,7 @@ export const party3d: Mode<PState> = {
       nextRound(s, ctx);
       changed = true;
     }
-    syncArena(s);
+    syncArena(s, ctx);
     moveBots(s, ctx, dt);
     if (s.stage === 'PLAY' && playTick(s, ctx, dt)) changed = true;
     return changed || `${s.stage}:${s.round}` !== before;
@@ -2256,6 +2414,7 @@ export const party3d: Mode<PState> = {
       soccer: s.kind === 'CALCIO' ? { team: s.team, score: s.score, goals: s.goals, kickoffAt: s.ball?.kickoffAt ?? 0 } : null,
       doors: s.kind === 'CORSA' ? s.doorOpen : [],
       throwReadyAt: s.throwReady?.[me] ?? 0,
+      ext: viewExt(s, me),
     };
   },
   ids: (s) => s.humans,
@@ -2306,10 +2465,13 @@ export const party3d: Mode<PState> = {
     s.doorOpen ??= [];
     s.doorBump ??= {};
     s.hitAt ??= {};
+    s.ext ??= {};
+    s.tpAt ??= {};
     for (const b of s.bots) {
       b.plan ??= 0;
       b.tried ??= [];
       b.memo ??= {};
+      b.mem ??= {};
     }
   },
 };

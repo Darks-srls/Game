@@ -1,6 +1,7 @@
 // Tipi condivisi tra il client React e il Worker Cloudflare
 import type { OcaSquare } from '../data/oca';
 import type { MiniKind } from '../data/party3d';
+import type { FlatId } from '../data/flatGames';
 
 export type GameId =
   | 'SPIA'
@@ -21,7 +22,8 @@ export type GameId =
   | 'NONRIDERE'
   | 'ASTRO'
   | 'PARTY3D'
-  | 'HORROR1';
+  | 'HORROR1'
+  | FlatId; // giochi flat a moduli (src/data/flatGames.ts)
 export type BombaMode = 'MISTO' | 'SILLABE' | 'CATEGORIE' | 'LETTERE';
 
 // Foglio condiviso: un'operazione di disegno (coordinate da 0 a 512)
@@ -367,6 +369,7 @@ export interface GameSettings {
   partyRounds: number; // axend party: quanti minigiochi
   horrorPressure: number; // non lasciarmi solo: 0 tranquilla, 1 normale, 2 alta
   spicy: boolean; // contenuti piccanti: idee e parole più sgravate (per adulti)
+  extra: Record<string, number>; // impostazioni dei giochi flat a moduli (vedi FLAT_GAMES: options)
   privateRoom: boolean; // stanza privata: non compare tra le stanze aperte
 }
 
@@ -540,7 +543,13 @@ export type ModeView =
   | NonRidereView
   | AstroView
   | PartyView
-  | Horror1View;
+  | Horror1View
+  | FlatModeView;
+
+// giochi flat a moduli: ognuno definisce la sua vista in src/data/flat/<id>.ts (deve avere almeno stage)
+export interface FlatModeView {
+  stage: string;
+}
 
 // 🔦 Non lasciarmi solo (horror cooperativo dei manutentori)
 export type H1PlayerState = 'ok' | 'ferito' | 'intrappolato' | 'evacuato' | 'estratto' | 'uscito';
@@ -629,4 +638,5 @@ export interface PartyView {
   soccer: { team: Record<string, number>; score: [number, number]; goals: Record<string, number>; kickoffAt: number } | null; // calcetto
   doors: string[]; // corsa pazza: porte sfondate ("fila:porta")
   throwReadyAt: number; // pomodorata: quando posso lanciare di nuovo
+  ext: any; // minigiochi a moduli: dati del minigioco (vedi worker/minis)
 }

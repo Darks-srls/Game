@@ -635,7 +635,7 @@ export class CarKit {
   constructor() {
     this.bodyMats = ([0, 1] as const).map((t) => {
       const { map, orm } = paintAtlas(t);
-      return new THREE.MeshPhysicalMaterial({ map, roughnessMap: orm, metalnessMap: orm, roughness: 1, metalness: 1, clearcoat: 0.85, clearcoatRoughness: 0.14, envMapIntensity: 1.15 });
+      return new THREE.MeshPhysicalMaterial({ map, roughnessMap: orm, metalnessMap: orm, roughness: 1, metalness: 1, clearcoat: 0.85, clearcoatRoughness: 0.14, envMapIntensity: 0.95 });
     });
     this.flameMats = this.teamCol.map(
       (c) =>

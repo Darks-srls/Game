@@ -253,7 +253,7 @@ export const createTurboScene: CreateTurboScene = (canvas, opts) => {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !lowPower, powerPreference: 'high-performance', stencil: false, alpha: false });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMappingExposure = 0.9;
   renderer.setClearColor('#0b1028');
   const aniso = Math.min(lowPower ? 4 : 8, renderer.capabilities.getMaxAnisotropy());
   const view = new TurboView3D(aniso);
@@ -261,7 +261,7 @@ export const createTurboScene: CreateTurboScene = (canvas, opts) => {
   const pmrem = new THREE.PMREMGenerator(renderer);
   const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   view.scene.environment = env;
-  view.scene.environmentIntensity = 0.6;
+  view.scene.environmentIntensity = 0.42;
 
   const dpr = Math.max(1, window.devicePixelRatio || 1);
   let quality: Quality = lowPower ? 'media' : 'alta';
@@ -292,7 +292,7 @@ export const createTurboScene: CreateTurboScene = (canvas, opts) => {
     const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: lowPower ? 0 : 4 });
     composer = new EffectComposer(renderer, rt);
     composer.addPass(new RenderPass(view.scene, view.camera));
-    bloomPass = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.55, 0.42, 0.9);
+    bloomPass = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.3, 0.35, 1.0);
     composer.addPass(bloomPass);
     composer.addPass(new OutputPass());
   };

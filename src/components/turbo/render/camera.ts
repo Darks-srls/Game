@@ -2,7 +2,7 @@
 // "Macchina": dietro la macchina a distanza/altezza/angolo delle impostazioni, gira con la macchina anche sui muri.
 // "Palla" (ball cam): un braccio che parte dalla macchina e punta la palla → la macchina resta sempre in basso al centro.
 // Sguardo libero (look) che ruota il braccio attorno alla macchina, morbidezza (stiffness), FOV orizzontale come in RL
-// adattato agli schermi verticali, scossoni (gol, demolizioni), mai dentro i muri (si avvicina se un muro sta in mezzo).
+// adattato agli schermi verticali, scossoni (gol, demolizioni). Come in RL può finire dietro un muro: da lì il muro non si vede.
 // I conti si fanno nelle unità della fisica (uu, z in alto), poi si converte per three.
 import * as THREE from 'three';
 import { arenaDist } from '../../../game/turbo/arena';
@@ -13,6 +13,8 @@ import { S } from './coords';
 
 const UP = new THREE.Vector3(0, 0, 1);
 const DEG = Math.PI / 180;
+const FLOOR_MIN = 24; // la telecamera resta almeno a questa quota (uu)
+const OUT_MAX = 160; // quanto può uscire dal campo (dietro i muri; le tribune iniziano a 250)
 const clamp = (v: number, a: number, b: number) => (v < a ? a : v > b ? b : v);
 const ease = (rate: number, dt: number) => 1 - Math.exp(-rate * dt);
 
@@ -54,8 +56,8 @@ export class CameraRig {
   private up = new THREE.Vector3(0, 0, 1);
   private yaw = 0; // sguardo libero
   private pitch = 0;
-  private reach = 1; // quanto del braccio è libero (muri in mezzo)
   private trauma = 0;
+  private lookUp = 0; // sguardo in su (rad) quando la palla è alta e il braccio non può scendere di più
   private fovKick = 0;
   private mode: 'follow' | 'spec' | 'orbit' | '' = '';
   private lastCar = new THREE.Vector3(1e9, 0, 0);
@@ -91,6 +93,7 @@ export class CameraRig {
     this.mode = mode;
 
     let fovBoost = 0;
+    let lookUp = 0;
     if (mode === 'follow' && me) {
       P.set(me.pos.x + (myOff?.x ?? 0), me.pos.y + (myOff?.y ?? 0), me.pos.z + (myOff?.z ?? 0));
       // calcio d'inizio, ricomparsa: si salta subito dietro la macchina
@@ -125,7 +128,17 @@ export class CameraRig {
         } else tmp2.multiplyScalar(1 / hl);
         // palla quasi sopra la macchina: la direzione orizzontale va verso l'avanti della macchina (niente giravolte)
         if (carFlat && hl < 260) tmp2.lerp(carFlat, clamp((260 - hl) / 200, 0, 1)).normalize();
-        const elev = clamp(Math.atan2(vert - 40, Math.max(hl, 1)), -0.32, 0.62) * clamp(dist / 400, 0.3, 1);
+        let elev = clamp(Math.atan2(vert - 40, Math.max(hl, 1)), -0.32, 0.62) * clamp(dist / 400, 0.3, 1);
+        // appoggiati (pavimento o muro): il braccio non scende sotto la superficie su cui si guida;
+        // quello che manca per vedere la palla lo fa lo sguardo, che si alza un po' (la macchina resta in basso)
+        if (me.onGround) {
+          const R = Math.hypot(cam.height, cam.distance);
+          const max = Math.acos(clamp(-8 / R, -1, 1)) - Math.atan2(cam.distance, cam.height);
+          if (elev > max) {
+            lookUp = Math.min(elev - max, 0.2);
+            elev = max;
+          }
+        }
         tgt.copy(tmp2).multiplyScalar(Math.cos(elev)).addScaledVector(up, Math.sin(elev));
       } else if (carFlat) tgt.copy(carFlat);
       else {
@@ -157,16 +170,29 @@ export class CameraRig {
       const lag = (1 - stiff) * 0.022;
       tmp.set(me.vel.x, me.vel.y, me.vel.z).multiplyScalar(lag).clampLength(0, 70);
       O.copy(P).sub(tmp);
+      // come in Rocket League la telecamera resta sempre alla sua distanza, anche se finisce dietro un muro:
+      // le pareti viste da dietro sono trasparenti (avvicinarla alla macchina faceva lo "zoom" strano sui muri).
+      // Solo il pavimento la ferma: scivola sopra, mai sotto
       C.copy(O).addScaledVector(F, -cam.distance).addScaledVector(U, cam.height);
-      // mai dentro i muri: dal perno (sopra la macchina) verso la telecamera, ci si ferma prima della parete
-      tmp2.copy(P).addScaledVector(U, Math.min(cam.height, 60));
-      const want = this.march(tmp2, C, 26);
-      if (now || want < this.reach) this.reach = want;
-      else this.reach += (want - this.reach) * ease(3.5, dt);
-      C.lerpVectors(tmp2, C, this.reach);
+      // fuori dal campo al massimo OUT_MAX (più in là ci sono le tribune): oltre, il braccio si accorcia quanto basta
+      if (arenaDist(C.x, C.y, C.z) < -OUT_MAX) {
+        tmp2.copy(C);
+        let lo = 0;
+        let hi = 1;
+        for (let i = 0; i < 10; i++) {
+          const mid = (lo + hi) / 2;
+          tmp.lerpVectors(O, tmp2, mid);
+          if (arenaDist(tmp.x, tmp.y, tmp.z) < -OUT_MAX) hi = mid;
+          else lo = mid;
+        }
+        C.lerpVectors(O, tmp2, lo);
+      }
+      if (C.z < FLOOR_MIN) C.z = FLOOR_MIN;
 
-      // inclinazione (angle) attorno all'asse destro
-      const a = clamp(cam.angle, -30, 10) * DEG;
+      // inclinazione (angle) attorno all'asse destro, più lo sguardo in su verso la palla alta
+      if (now) this.lookUp = lookUp;
+      else this.lookUp += (lookUp - this.lookUp) * ease(5, dt);
+      const a = clamp(cam.angle, -30, 10) * DEG + this.lookUp;
       Fc.copy(F).multiplyScalar(Math.cos(a)).addScaledVector(U, Math.sin(a));
       Uc.copy(U).multiplyScalar(Math.cos(a)).addScaledVector(F, -Math.sin(a));
       fovBoost = me.isSupersonic ? 1 : me.isBoosting ? 0.55 : 0;
@@ -202,8 +228,8 @@ export class CameraRig {
       tmp2.crossVectors(Fc, Uc).normalize();
       Fc.addScaledVector(tmp2, Math.sin(st * 1.9) * 0.025 * k).addScaledVector(Uc, Math.sin(st * 2.4) * 0.02 * k).normalize();
     }
-    // sicurezza: mai a meno di 22 uu da una parete (anche con lo scossone)
-    const d0 = arenaDist(C.x, C.y, C.z);
+    // spettatore: mai a meno di 22 uu da una parete (anche con lo scossone)
+    const d0 = mode === 'spec' ? arenaDist(C.x, C.y, C.z) : 1e9;
     if (d0 < 22) {
       tmp.set(arenaDist(C.x + 1, C.y, C.z) - arenaDist(C.x - 1, C.y, C.z), arenaDist(C.x, C.y + 1, C.z) - arenaDist(C.x, C.y - 1, C.z), arenaDist(C.x, C.y, C.z + 1) - arenaDist(C.x, C.y, C.z - 1));
       if (tmp.lengthSq() > 1e-8) C.addScaledVector(tmp.normalize(), 22 - d0);

@@ -464,8 +464,8 @@ void main() {
   vec3 team = mix(uBlue, uOrange, t);
   float glowLow = exp(-max(vWorld.y - 7.14, 0.0) * 0.8) * wall;
   float shimmer = 0.5 + 0.5 * sin(vWorld.x * 0.4 + vWorld.z * 0.3 - uTime * 1.6);
-  vec3 col = mix(vec3(0.7, 0.85, 1.0), team, 0.55) * (0.55 + hex * 1.1 + mull * 1.4 + glowLow * 1.3);
-  float a = uAlpha * (0.05 + hex * (0.16 + 0.08 * shimmer) + mull * 0.45 + fres * 0.32 + glowLow * 0.35);
+  vec3 col = mix(vec3(0.7, 0.85, 1.0), team, 0.55) * (0.4 + hex * 0.8 + mull * 1.0 + glowLow * 0.9);
+  float a = uAlpha * (0.035 + hex * (0.11 + 0.05 * shimmer) + mull * 0.35 + fres * 0.22 + glowLow * 0.25);
   gl_FragColor = vec4(col, clamp(a, 0.0, 0.9));
   ${FRAG_OUT}
 }`;
@@ -490,7 +490,7 @@ void main() {
   float depth = clamp((abs(vWorld.z) - 51.2) / 8.8, 0.0, 1.0);
   float back = smoothstep(0.6, 0.9, an.z) * step(59.5, abs(vWorld.z));
   float pulse = 0.5 + 0.5 * sin(uTime * 2.0 - vWorld.y * 1.2);
-  vec3 col = uColor * (0.18 + depth * 0.5 + back * (1.4 + 0.4 * pulse) + net * (0.9 + depth) + uFlash * 2.5);
+  vec3 col = uColor * (0.15 + depth * 0.35 + back * (0.8 + 0.25 * pulse) + net * (0.6 + 0.6 * depth) + uFlash * 2.0);
   float a = 0.38 + net * 0.45 + back * 0.55 + depth * 0.15 + uFlash * 0.3;
   gl_FragColor = vec4(col, clamp(a, 0.0, 1.0));
   ${FRAG_OUT}
@@ -664,10 +664,10 @@ export class Stadium {
     const aniso = opts.aniso;
 
     // ---- luci (niente ombre: costano troppo sui telefoni; le ombre sono dischi finti sotto macchine e palla)
-    G.add(new THREE.HemisphereLight('#c3cdff', '#3b3430', 1.25));
-    const key = new THREE.DirectionalLight('#fff4e4', 2.8);
+    G.add(new THREE.HemisphereLight('#c3cdff', '#3b3430', 0.85));
+    const key = new THREE.DirectionalLight('#fff4e4', 1.9);
     key.position.set(-30, 60, 25);
-    const fill = new THREE.DirectionalLight('#a9b8ff', 0.75);
+    const fill = new THREE.DirectionalLight('#a9b8ff', 0.5);
     fill.position.set(40, 25, -45);
     G.add(key, key.target, fill, fill.target);
 
@@ -915,11 +915,11 @@ export class Stadium {
     G.add(new THREE.Mesh(lamps.toGeometry(), this.lampMat));
     const roofLights = new Geo();
     standBand(roofLights, 1520, 4490, 1700, 4470);
-    G.add(new THREE.Mesh(roofLights.toGeometry(), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.6, 1.5, 1.3), toneMapped: false, side: THREE.DoubleSide })));
+    G.add(new THREE.Mesh(roofLights.toGeometry(), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.2, 1.13, 0.98), toneMapped: false, side: THREE.DoubleSide })));
 
     // ---- aloni delle luci (un'unica mesh)
     this.glows = new Glows(64);
-    const warm = new THREE.Color(1.4, 1.3, 1.05);
+    const warm = new THREE.Color(1.1, 1.02, 0.84);
     let gi = 0;
     for (const [tx, ty] of towers) {
       const dx = -tx / Math.hypot(tx, ty);
@@ -1081,9 +1081,9 @@ export class Stadium {
     this.crowdGeo.instanceCount = Math.floor(this.crowdTotal * frac);
     this.glassMat.uniforms.uHex.value = q === 'bassa' ? 0.6 : 1;
     // con il bagliore (bloom) i neon possono andare oltre il bianco
-    this.hdr = bloom ? 2.2 : 1;
+    this.hdr = bloom ? 1.6 : 1;
     this.neonMat.color.setScalar(this.hdr);
-    this.lampMat.color.setScalar(bloom ? 1.6 : 1);
+    this.lampMat.color.setScalar(bloom ? 1.25 : 0.9);
   }
 
   update(t: number, dt: number) {

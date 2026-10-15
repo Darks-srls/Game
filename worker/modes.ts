@@ -35,6 +35,13 @@ export interface Mode<S> {
   leave(s: S, id: string, ctx: Ctx): boolean;
   upgrade?(s: S): void;
   p3Tick?(s: S, ctx: Ctx, dt: number): boolean; // giochi 3D: 15 volte al secondo (bot, cadute, fasi) // partite salvate da una versione precedente: aggiunge i campi nuovi
+  // giochi "veloci" (Axend Turbo): un giro tante volte al secondo che manda lo stato ai telefoni senza salvarlo,
+  // e i comandi dei telefoni che arrivano (FAST_IN) senza aggiornamenti generali
+  fast?: {
+    hz: number;
+    tick(s: S, ctx: Ctx, dt: number): { send?: string; changed?: boolean };
+    input(s: S, me: string, payload: any, ctx: Ctx): void;
+  };
 }
 
 const pick = <T,>(list: T[]): T => list[Math.floor(Math.random() * list.length)];

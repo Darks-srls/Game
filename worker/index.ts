@@ -11,12 +11,14 @@ import { ASTRO_MODES } from './astro';
 import { PARTY3D_MODES } from './party3d';
 import { HORROR_MODES } from './horror1';
 import { FLAT_MODES } from './flat';
+import { TURBO_MODES } from './turbo';
+import { TURBO_OPTIONS } from '../src/game/turbo/room';
 import { FLAT_IDS, flatInfo } from '../src/data/flatGames';
 import type { NetPos } from '../src/data/party3d';
 import { WORLD } from '../src/data/astro';
 
 // Tutti i giochi "a moduli": disegno e bomba (modes.ts), giochi di gruppo (party.ts e party2.ts), videogiochi (astro.ts)
-const MODES = { ...BASE_MODES, ...PARTY_MODES, ...PARTY2_MODES, ...ASTRO_MODES, ...PARTY3D_MODES, ...HORROR_MODES, ...FLAT_MODES };
+const MODES = { ...BASE_MODES, ...PARTY_MODES, ...PARTY2_MODES, ...ASTRO_MODES, ...PARTY3D_MODES, ...HORROR_MODES, ...FLAT_MODES, ...TURBO_MODES };
 // Videogiochi in tempo reale: le posizioni viaggiano a parte, 10 volte al secondo
 const REALTIME: GameId[] = ['ASTRO'];
 const P3_GAMES: GameId[] = ['PARTY3D', 'HORROR1']; // giochi 3D: posizioni con quota, bot e fisica sul server
@@ -33,7 +35,7 @@ const ROOM_TTL = 12 * 60 * 60 * 1000; // le stanze inattive da 12 ore vengono ca
 const MAX_PLAYERS = 16;
 const GAMES: GameId[] = [
   'SPIA', 'IMPOSTORE', 'TELEFONO', 'DISEGNA', 'BOMBA', 'ARTISTA', 'BATTUTE', 'PREFERIRESTI', 'SINTONIA', 'TABU', 'CHISONO',
-  'TEATRINO', 'SMORFIE', 'DADI', 'OCA', 'NONRIDERE', 'ASTRO', 'PARTY3D', 'HORROR1',
+  'TEATRINO', 'SMORFIE', 'DADI', 'OCA', 'NONRIDERE', 'ASTRO', 'PARTY3D', 'HORROR1', 'TURBO',
   ...FLAT_IDS, // giochi flat a moduli
 ];
 const STEP_GRACE = 4000; // a turno scaduto, qualche secondo per le consegne automatiche dei telefoni
@@ -79,7 +81,7 @@ const pairOf = (key: string) => (key[0] === 's' ? WORD_PAIRS_SPICY : WORD_PAIRS)
 const badCount = (settings: GameSettings, players: number) => Math.max(1, Math.min(settings.spiesCount, Math.floor((players - 1) / 2)));
 
 const SERVER_NAME = 'global-v2';
-const SERVER_VERSION = '2026-10-15-giochi-nuovi';
+const SERVER_VERSION = '2026-10-15-turbo';
 
 export default {
   async fetch(request: Request, env: any): Promise<Response> {
@@ -232,6 +234,7 @@ export class GameServer extends DurableObject {
           if (mode.tick(room.mg.data, this.ctxFor(room))) changed = true;
           if (mode.finished(room.mg.data)) room.phase = 'ROUND_OVER';
           else if (P3_GAMES.includes(room.mg.kind)) this.ensureP3(room.roomCode); // dopo un riavvio il giro riparte
+          else if (mode.fast) this.ensureFast(room.roomCode);
         } catch (err) {
           console.error('Scadenza non gestita nella stanza', room.roomCode, err);
         }
@@ -454,6 +457,53 @@ export class GameServer extends DurableObject {
     return map;
   }
 
+  // ---- giochi veloci (Axend Turbo): un giro a hz fissi che manda lo stato del campo ai telefoni della stanza
+  fastTimers = new Map<string, { last: number; timer: ReturnType<typeof setInterval> }>();
+  ensureFast(code: string) {
+    if (this.fastTimers.has(code)) return;
+    const room = this.rooms.get(code);
+    const hz = room?.mg ? (MODES[room.mg.kind]?.fast?.hz ?? 60) : 60;
+    const entry = { last: Date.now(), timer: setInterval(() => this.fastTick(code), 1000 / hz) };
+    this.fastTimers.set(code, entry);
+  }
+  stopFast(code: string) {
+    const e = this.fastTimers.get(code);
+    if (e) clearInterval(e.timer);
+    this.fastTimers.delete(code);
+  }
+  fastTick(code: string) {
+    const room = this.rooms.get(code);
+    const entry = this.fastTimers.get(code);
+    const mode = room?.mg ? MODES[room.mg.kind] : undefined;
+    if (!room || !entry || room.phase !== 'PLAYING' || !room.mg || !mode?.fast) return this.stopFast(code);
+    const now = Date.now();
+    const dt = Math.min(0.25, (now - entry.last) / 1000);
+    entry.last = now;
+    let changed = false;
+    try {
+      const r = mode.fast.tick(room.mg.data, this.ctxFor(room), dt);
+      changed = !!r.changed;
+      if (r.send) {
+        for (const ws of this.ctx.getWebSockets()) {
+          if (this.meta(ws)?.roomCode !== code) continue;
+          try {
+            ws.send(r.send);
+          } catch {}
+        }
+      }
+      if (mode.finished(room.mg.data)) {
+        room.phase = 'ROUND_OVER';
+        changed = true;
+      }
+    } catch (err) {
+      console.error('Errore nel giro veloce della stanza', code, err);
+    }
+    if (changed) {
+      this.broadcastRoom(code);
+      this.scheduleAlarm();
+    }
+  }
+
   ensureP3(code: string) {
     if (this.p3Timers.has(code)) return;
     const entry = { last: Date.now(), timer: setInterval(() => this.p3Tick(code), P3_TICK_MS) };
@@ -533,6 +583,8 @@ export class GameServer extends DurableObject {
     if (!room) return;
     room.lastActivity = Date.now();
     this.ctx.storage.put(`room:${code}`, room);
+    // giochi veloci: dopo un riavvio del server il giro riparte appena qualcuno rientra
+    if (room.phase === 'PLAYING' && room.mg && MODES[room.mg.kind]?.fast) this.ensureFast(code);
 
     const game = room.settings.game;
     const inGame = room.phase !== 'LOBBY';
@@ -970,6 +1022,19 @@ export class GameServer extends DurableObject {
       return;
     }
 
+    // Giochi veloci: i miei comandi (niente salvataggi né aggiornamenti generali: ci pensa il giro veloce)
+    if (type === 'FAST_IN') {
+      if (room.phase !== 'PLAYING' || !room.mg) return;
+      const mode = MODES[room.mg.kind];
+      if (!mode?.fast) return;
+      try {
+        mode.fast.input(room.mg.data, me.id, payload, this.ctxFor(room));
+      } catch (err) {
+        console.error('Comando veloce non valido', err);
+      }
+      return;
+    }
+
     // Voce di prossimità: i telefoni si scambiano i messaggi per collegarsi direttamente (WebRTC). Il server li passa e basta:
     // l'audio non passa mai di qui e non viene registrato
     if (type === 'RTC') {
@@ -1044,8 +1109,9 @@ export class GameServer extends DurableObject {
         // giochi flat a moduli: solo le impostazioni del gioco scelto, solo con i valori ammessi
         if (payload.extra && typeof payload.extra === 'object') {
           const info = flatInfo(s.game);
+          const turboOpts = s.game === 'TURBO' ? Object.values(TURBO_OPTIONS).map((o) => ({ key: o.key, values: o.values.map((v) => [v, '']) })) : [];
           for (const [k, v] of Object.entries(payload.extra as Record<string, unknown>)) {
-            const o = info?.options.find((x) => x.key === k);
+            const o = info?.options.find((x) => x.key === k) ?? turboOpts.find((x) => x.key === k);
             if (o && typeof v === 'number' && o.values.some(([x]) => x === v)) s.extra = { ...(s.extra ?? {}), [k]: v };
           }
         }
@@ -1061,13 +1127,15 @@ export class GameServer extends DurableObject {
         const online = room.players.filter(p => p.isOnline);
         // Axend Party: si può giocare anche in pochi, i bot riempiono la partita
         const party = room.settings.game === 'PARTY3D';
+        const turbo = room.settings.game === 'TURBO'; // Axend Turbo: si gioca anche da soli, i bot riempiono le squadre
         const horror = room.settings.game === 'HORROR1';
         const flat = flatInfo(room.settings.game);
         if (horror && online.length > 8) return this.error(ws, 'Questo gioco è per squadre da 1 a 8 persone.');
         if (flat && !MODES[flat.id]) return this.error(ws, `${flat.name} non è ancora pronto: scegli un altro gioco.`);
         if (flat && online.length < flat.min) return this.error(ws, `Per ${flat.name} servono almeno ${flat.min} giocatori collegati.`);
         if (flat?.max && online.length > flat.max) return this.error(ws, `${flat.name} si gioca al massimo in ${flat.max}.`);
-        if (!horror && !flat && (party ? online.length < 1 || online.length + room.settings.partyBots < 3 : online.length < 3))
+        if (turbo && online.length > 6) return this.error(ws, 'Axend Turbo si gioca al massimo 3 contro 3.');
+        if (!horror && !flat && !turbo && (party ? online.length < 1 || online.length + room.settings.partyBots < 3 : online.length < 3))
           return this.error(ws, party ? 'Servono almeno 3 giocatori, contando i bot.' : 'Servono almeno 3 giocatori collegati per iniziare.');
         this.resetRound(room);
         this.clearTel(room);
@@ -1080,6 +1148,7 @@ export class GameServer extends DurableObject {
         room.currentRound += 1;
         room.phase = 'PLAYING';
         if (room.mg && P3_GAMES.includes(room.mg.kind)) this.ensureP3(room.roomCode);
+        if (room.mg && MODES[room.mg.kind]?.fast) this.ensureFast(room.roomCode);
         this.scheduleAlarm();
         break;
       }

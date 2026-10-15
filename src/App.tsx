@@ -33,6 +33,7 @@ if (URL_ROOM && loadSession()?.roomCode !== URL_ROOM) clearSession();
 // Il gioco 3D si scarica solo quando serve (Three.js è pesante)
 const PartyView = lazy(() => import('./components/PartyView'));
 const HorrorView = lazy(() => import('./components/HorrorView'));
+const TurboView = lazy(() => import('./components/turbo/TurboView'));
 
 // Schermate dei giochi "a moduli"
 const MODE_VIEWS: Partial<Record<GameId, ComponentType<ModeProps>>> = {
@@ -47,6 +48,7 @@ const MODE_VIEWS: Partial<Record<GameId, ComponentType<ModeProps>>> = {
   ASTRO: AstroView,
   PARTY3D: PartyView as unknown as ComponentType<ModeProps>,
   HORROR1: HorrorView as unknown as ComponentType<ModeProps>,
+  TURBO: TurboView as unknown as ComponentType<ModeProps>,
   ...FLAT_VIEWS, // giochi flat a moduli
 };
 
@@ -198,7 +200,7 @@ export default function App() {
       // Giochi a moduli: tutti tranne Spia, Impostore e Telefono
       const artista = state.settings.game === 'ARTISTA';
       view = (
-        <Suspense fallback={<p className="py-20 text-center font-display text-2xl text-white">{state.settings.game === 'PARTY3D' || state.settings.game === 'HORROR1' ? 'Carico il mondo 3D… 🎉' : 'Carico il gioco… 🎲'}</p>}>
+        <Suspense fallback={<p className="py-20 text-center font-display text-2xl text-white">{state.settings.game === 'PARTY3D' || state.settings.game === 'HORROR1' || state.settings.game === 'TURBO' ? 'Carico il mondo 3D… 🎉' : 'Carico il gioco… 🎲'}</p>}>
         <Mode
           key={state.currentRound}
           state={state}
@@ -222,7 +224,15 @@ export default function App() {
                     danger: true,
                     onConfirm: () => game.mgAction('MG_FORCE'),
                   }
-                : state.settings.game === 'CHISONO'
+                : state.settings.game === 'TURBO'
+                  ? {
+                      title: 'Terminare la partita?',
+                      text: 'La partita finisce subito col punteggio di adesso.',
+                      confirmLabel: 'Termina',
+                      danger: true,
+                      onConfirm: () => game.mgAction('MG_FORCE'),
+                    }
+                  : state.settings.game === 'CHISONO'
                   ? {
                       title: 'Finire la partita?',
                       text: 'Si svelano tutti i personaggi e si va alla classifica.',

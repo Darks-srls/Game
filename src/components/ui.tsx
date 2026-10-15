@@ -38,6 +38,7 @@ export type GameCategory = (typeof GAME_CATEGORIES)[number]['id'];
 
 // I giochi di Axend Games (le copertine si creano con "npm run grafica")
 export const GAMES: { id: GameId; name: string; desc: string; emoji: string; banner: string; cat: GameCategory; isNew?: boolean }[] = [
+  { id: 'TURBO', name: 'Axend Turbo', desc: 'Calcio con le macchine a razzo: la fisica di Rocket League, muri, aerei e flip reset. 1v1, 2v2, 3v3 con i bot!', emoji: '🚗', banner: '/art/gioco-turbo.webp', cat: 'video', isNew: true },
   { id: 'HORROR1', name: 'Non lasciarmi solo', desc: 'Horror cooperativo in prima persona: riparate gli impianti di un condominio di notte, mentre il Custode ascolta ogni rumore. Voce di prossimità.', emoji: '🔦', banner: '/art/gioco-horror1.webp', cat: 'video', isNew: true },
   { id: 'PARTY3D', name: 'Axend Party', desc: 'Videogioco 3D a minigiochi: polpette giganti, la ciabatta della nonna, cecchini e tanto caos. Con i bot!', emoji: '🎉', banner: '/art/gioco-party.webp', cat: 'video', isNew: true },
   { id: 'ASTRO', name: 'Astro Impostori', desc: 'Il videogioco: fai i compiti sull’astronave e scopri chi elimina l’equipaggio', emoji: '🚀', banner: '/art/gioco-astro.webp', cat: 'video' },

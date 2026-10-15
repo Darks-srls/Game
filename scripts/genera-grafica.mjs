@@ -161,6 +161,12 @@ const ASSETS = [
     size: [800, 450],
     prompt: 'Game cover: a cute cartoon clown character making a silly face and juggling rubber chickens in front of cute friends who desperately try not to laugh, cheeks puffed and hands over their mouths, one about to burst out laughing, comedic.',
   },
+  {
+    file: 'gioco-turbo',
+    aspect: '16:9',
+    size: [800, 450],
+    prompt: 'Game cover: cute chunky cartoon rocket-powered race cars, one blue and one orange, flying through the air with glowing boost flames and hitting a giant glossy soccer ball inside a futuristic neon stadium at night, sparks and motion trails, crowd lights, explosive action, joyful.',
+  },
   // giochi flat a moduli (src/data/flatGames.ts)
   {
     file: 'gioco-lupi',

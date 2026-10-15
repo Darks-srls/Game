@@ -23,6 +23,7 @@ export type GameId =
   | 'ASTRO'
   | 'PARTY3D'
   | 'HORROR1'
+  | 'TURBO' // Axend Turbo: calcio con le macchine (src/game/turbo)
   | FlatId; // giochi flat a moduli (src/data/flatGames.ts)
 export type BombaMode = 'MISTO' | 'SILLABE' | 'CATEGORIE' | 'LETTERE';
 

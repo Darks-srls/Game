@@ -25,6 +25,9 @@ export interface Realtime {
   // voce che passa dal server (pezzetti compressi in binario)
   voiceSend: (data: ArrayBuffer) => void;
   voiceIn: { current: ((from: string, flags: number, data: Uint8Array) => void) | null };
+  // giochi "veloci" (Axend Turbo): comandi in uscita e stato del campo in entrata, tante volte al secondo
+  fastSend: (payload: unknown) => void;
+  fastIn: { current: ((payload: any) => void) | null };
 }
 export type P3Positions = { at: number; p: Map<string, NetPos> };
 
@@ -68,6 +71,7 @@ export function useGameSocket() {
   const rtRef = useRef<RtPositions>({ at: 0, p: new Map() });
   const p3Ref = useRef<P3Positions>({ at: 0, p: new Map() });
   const p3EventsRef = useRef<((type: 'P3_KNOCK' | 'P3_FX', payload: any) => void) | null>(null);
+  const fastInRef = useRef<((payload: any) => void) | null>(null);
   const rtcRef = useRef<((from: string, d: any) => void) | null>(null);
   const voiceInRef = useRef<((from: string, flags: number, data: Uint8Array) => void) | null>(null);
 
@@ -173,6 +177,8 @@ export function useGameSocket() {
         };
       } else if (type === 'P3_KNOCK' || type === 'P3_FX') {
         p3EventsRef.current?.(type, payload);
+      } else if (type === 'FAST') {
+        fastInRef.current?.(payload);
       } else if (type === 'RTC') {
         rtcRef.current?.(payload?.from, payload?.d);
       } else if (type === 'RT_POS') {
@@ -409,6 +415,11 @@ export function useGameSocket() {
         if (ws?.readyState === WebSocket.OPEN && ws.bufferedAmount < 64000) ws.send(data);
       },
       voiceIn: voiceInRef,
+      fastSend: (payload: unknown) => {
+        const ws = wsRef.current;
+        if (ws?.readyState === WebSocket.OPEN && ws.bufferedAmount < 32000) ws.send(JSON.stringify({ type: 'FAST_IN', payload }));
+      },
+      fastIn: fastInRef,
     } as Realtime,
     // Il mio tratto: compare subito sul mio foglio e parte verso gli altri
     drawOp: (op: DrawOp) => {

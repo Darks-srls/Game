@@ -4,6 +4,7 @@ import type { BombaMode, ClientGameState, GameSettings } from '../types/game';
 import { CATEGORY_ICONS, DEFAULT_LOCATIONS, LOCATION_CATEGORIES } from '../data/locations';
 import { Art, Avatar, BottomBar, GAMES, NewBadge, Segmented, shareRoom } from './ui';
 import { flatInfo, flatOpt, type FlatId } from '../data/flatGames';
+import { TURBO_OPTIONS } from '../game/turbo/room';
 
 const TIMES: [number, string][] = [[180, '3'], [300, '5'], [480, '8'], [600, '10'], [0, '∞']];
 const DRAW_TIMES: [number, string][] = [[60, '60s'], [90, '90s'], [120, '2 min'], [0, '∞']];
@@ -99,9 +100,16 @@ export default function LobbyView({ state, onUpdateSettings, onStart, onKick }: 
   const horror = state.settings.game === 'HORROR1';
   const flat = flatInfo(state.settings.game); // giochi flat a moduli: minimo e massimo di giocatori loro
   const minPlayers = flat?.min ?? 3;
+  const turbo = state.settings.game === 'TURBO';
+  const turboOpt = (o: { key: string; values: number[]; def: number }) => {
+    const v = s.extra?.[o.key];
+    return typeof v === 'number' && o.values.includes(v) ? v : o.def;
+  };
   const ready = horror
     ? online >= 1 && online <= 8
-    : state.settings.game === 'PARTY3D'
+    : turbo
+      ? online >= 1 && online <= 6
+      : state.settings.game === 'PARTY3D'
       ? online >= 1 && online + state.settings.partyBots >= 3
       : online >= minPlayers && (!flat?.max || online <= flat.max);
   const needed = horror ? 0 : state.settings.game === 'PARTY3D' ? Math.max(0, 3 - online - state.settings.partyBots) : minPlayers - online;
@@ -140,7 +148,7 @@ export default function LobbyView({ state, onUpdateSettings, onStart, onKick }: 
             <div className="mb-1 flex flex-wrap gap-1.5">
               <Chip>Stanza {state.roomCode}</Chip>
               <Chip>{s.privateRoom ? '🔒 Privata' : '🌍 Aperta a tutti'}</Chip>
-              {s.spicy && <Chip tone="red">🌶️ Piccante</Chip>}
+              {s.spicy && s.game !== 'TURBO' && <Chip tone="red">🌶️ Piccante</Chip>}
             </div>
             <p key={current.id} className="pop font-display text-[32px] leading-none text-white [text-shadow:0_3px_0_rgba(0,0,0,0.35)]">
               {current.name}
@@ -251,14 +259,16 @@ export default function LobbyView({ state, onUpdateSettings, onStart, onKick }: 
             disabled={locked}
             onChange={(privateRoom) => onUpdateSettings({ privateRoom })}
           />
-          <Switch
-            icon="🌶️"
-            label="Contenuti piccanti"
-            hint="Parole, idee e luoghi più sgravati. Solo tra adulti!"
-            on={s.spicy}
-            disabled={locked}
-            onChange={(spicy) => onUpdateSettings({ spicy })}
-          />
+          {s.game !== 'TURBO' && (
+            <Switch
+              icon="🌶️"
+              label="Contenuti piccanti"
+              hint="Parole, idee e luoghi più sgravati. Solo tra adulti!"
+              on={s.spicy}
+              disabled={locked}
+              onChange={(spicy) => onUpdateSettings({ spicy })}
+            />
+          )}
         </div>
         {s.game === 'TELEFONO' && (
           <Setting label="⏱️ Tempo per disegnare">
@@ -434,6 +444,29 @@ export default function LobbyView({ state, onUpdateSettings, onStart, onKick }: 
                 {s.impostorWord ? 'Con la parola simile, l’impostore non sa di esserlo: più risate!' : 'Senza parola, l’impostore sa di esserlo e deve bluffare.'}
               </p>
             </Setting>
+          </>
+        )}
+        {turbo && (
+          <>
+            <Setting label="🚗 Giocatori per squadra">
+              <Segmented
+                options={[[1, '1 contro 1'], [2, '2 contro 2'], [3, '3 contro 3']]}
+                value={turboOpt(TURBO_OPTIONS.size)}
+                disabled={locked}
+                onChange={(v) => onUpdateSettings({ extra: { [TURBO_OPTIONS.size.key]: v } })}
+              />
+            </Setting>
+            <Setting label="🤖 Bravura dei bot">
+              <Segmented
+                options={[[0, 'Facili'], [1, 'Medi'], [2, 'Forti']]}
+                value={turboOpt(TURBO_OPTIONS.skill)}
+                disabled={locked}
+                onChange={(v) => onUpdateSettings({ extra: { [TURBO_OPTIONS.skill.key]: v } })}
+              />
+            </Setting>
+            <p className="text-xs font-semibold text-slate-400">
+              Calcio con le macchine a razzo, fisica come Rocket League. Partite da 5 minuti; i bot riempiono le squadre. Sul telefono c'è il pulsante ASSISTITO.
+            </p>
           </>
         )}
         {flat && (

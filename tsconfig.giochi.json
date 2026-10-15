@@ -2,6 +2,6 @@
   // controllo dei tipi per il server dei giochi a moduli e per i banchi di prova (il tsconfig principale esclude worker/ e scripts/)
   "extends": "./tsconfig.json",
   "compilerOptions": { "types": ["node"] },
-  "include": ["worker/minis/**/*.ts", "worker/flat/**/*.ts", "scripts/*.ts", "scripts/flat-bots/*.ts"],
+  "include": ["worker/minis/**/*.ts", "worker/flat/**/*.ts", "worker/turbo.ts", "scripts/*.ts", "scripts/flat-bots/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

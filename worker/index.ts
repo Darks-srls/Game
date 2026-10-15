@@ -79,7 +79,7 @@ const pairOf = (key: string) => (key[0] === 's' ? WORD_PAIRS_SPICY : WORD_PAIRS)
 const badCount = (settings: GameSettings, players: number) => Math.max(1, Math.min(settings.spiesCount, Math.floor((players - 1) / 2)));
 
 const SERVER_NAME = 'global-v2';
-const SERVER_VERSION = '2026-10-10-voce';
+const SERVER_VERSION = '2026-10-15-giochi-nuovi';
 
 export default {
   async fetch(request: Request, env: any): Promise<Response> {
